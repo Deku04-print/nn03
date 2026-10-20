@@ -1,0 +1,23 @@
+Django==4.2.9
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+psycopg[binary]>=3.1
+django-cors-headers==4.3.1
+dj-database-url==2.1.0
+# Vector search
+pgvector==0.2.5
+# AI / Agents
+langchain==0.1.9
+langgraph==0.0.26
+langchain-community==0.0.24
+numpy>=1.24.0
+# Ollama Python client
+ollama==0.1.7
+# Utilities
+python-dotenv==1.0.1
+openpyxl>=3.1.2
+pydantic
+# Testing
+pytest==8.0.0
+pytest-django==4.7.0
+gunicorn==23.0.0

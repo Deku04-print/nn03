@@ -1,0 +1,247 @@
+
+[
+    {
+        "id": "eval-001",
+        "description": "List index accessed as i+1 in for-range loop",
+        "language": "python",
+        "code": "numbers = [1, 2, 3, 4, 5]\nfor i in range(len(numbers)):\n    print(numbers[i + 1])",
+        "diagnostics": [
+            {
+                "message": "IndexError: list index out of range",
+                "severity": "error",
+                "line": 3
+            }
+        ],
+        "expected_category": "index_boundary",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "index",
+            "range",
+            "boundary",
+            "valid"
+        ]
+    },
+    {
+        "id": "eval-002",
+        "description": "Iterating over None object",
+        "language": "python",
+        "code": "users = None\nfor user in users:\n    print(user.name)",
+        "diagnostics": [
+            {
+                "message": "TypeError: 'NoneType' object is not iterable",
+                "severity": "error",
+                "line": 2
+            }
+        ],
+        "expected_category": "null_reference",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "None",
+            "value",
+            "where",
+            "assigned"
+        ]
+    },
+    {
+        "id": "eval-003",
+        "description": "Missing await on async function",
+        "language": "javascript",
+        "code": "async function fetchData() {\n  const result = fetch('https://api.example.com/data');\n  return result.json();\n}",
+        "diagnostics": [
+            {
+                "message": "TypeError: result.json is not a function",
+                "severity": "error",
+                "line": 3
+            }
+        ],
+        "expected_category": "async_error",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "await",
+            "Promise",
+            "async"
+        ]
+    },
+    {
+        "id": "eval-004",
+        "description": "Python syntax error — missing colon after if",
+        "language": "python",
+        "code": "x = 5\nif x > 3\n    print('big')",
+        "diagnostics": [
+            {
+                "message": "SyntaxError: expected ':'",
+                "severity": "error",
+                "line": 2
+            }
+        ],
+        "expected_category": "syntax_error",
+        "expected_problem_type": "syntax_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "syntax",
+            "colon",
+            "statement"
+        ]
+    },
+    {
+        "id": "eval-005",
+        "description": "Type error passing string to int function",
+        "language": "python",
+        "code": "def add_one(n: int) -> int:\n    return n + 1\n\nresult = add_one('5')",
+        "diagnostics": [
+            {
+                "message": "TypeError: can only concatenate str (not 'int') to str",
+                "severity": "error",
+                "line": 2
+            }
+        ],
+        "expected_category": "type_error",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "type",
+            "string",
+            "integer",
+            "argument"
+        ]
+    },
+    {
+        "id": "eval-006",
+        "description": "Import error — missing module",
+        "language": "python",
+        "code": "import numpy as np\narr = np.array([1, 2, 3])",
+        "diagnostics": [
+            {
+                "message": "ModuleNotFoundError: No module named 'numpy'",
+                "severity": "error",
+                "line": 1
+            }
+        ],
+        "expected_category": "dependency_error",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "install",
+            "dependency",
+            "module",
+            "package"
+        ]
+    },
+    {
+        "id": "eval-007",
+        "description": "Infinite loop — wrong termination condition",
+        "language": "python",
+        "code": "i = 0\nwhile i >= 0:\n    print(i)\n    i += 1",
+        "diagnostics": [],
+        "expected_category": "loop_error",
+        "expected_problem_type": "logic_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "condition",
+            "termination",
+            "increment",
+            "boundary"
+        ]
+    },
+    {
+        "id": "eval-008",
+        "description": "React useEffect with missing dependency",
+        "language": "javascript",
+        "code": "useEffect(() => {\n  fetchUser(userId);\n}, []);",
+        "diagnostics": [
+            {
+                "message": "React Hook useEffect has a missing dependency: 'userId'",
+                "severity": "warning",
+                "line": 1
+            }
+        ],
+        "expected_category": "framework_error",
+        "expected_problem_type": "logic_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "dependency",
+            "array",
+            "stale",
+            "userId"
+        ]
+    },
+    {
+        "id": "eval-009",
+        "description": "Django N+1 query inside loop",
+        "language": "python",
+        "code": "posts = Post.objects.all()\nfor post in posts:\n    print(post.author.name)",
+        "diagnostics": [],
+        "expected_category": "database_error",
+        "expected_problem_type": "logic_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "query",
+            "loop",
+            "select_related",
+            "N+1"
+        ]
+    },
+    {
+        "id": "eval-010",
+        "description": "Unhandled promise rejection",
+        "language": "javascript",
+        "code": "fetch('/api/data')\n  .then(res => res.json())\n  .then(data => processData(data));",
+        "diagnostics": [
+            {
+                "message": "UnhandledPromiseRejection: fetch failed",
+                "severity": "error",
+                "line": 1
+            }
+        ],
+        "expected_category": "async_error",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "catch",
+            "error",
+            "rejected",
+            "handle"
+        ]
+    },
+    {
+        "id": "eval-011",
+        "description": "SQL JOIN missing ON clause conceptual",
+        "language": "sql",
+        "code": "SELECT orders.id, customers.name FROM orders, customers WHERE orders.total > 100",
+        "diagnostics": [],
+        "expected_category": "query_error",
+        "expected_problem_type": "logic_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "JOIN",
+            "relationship",
+            "cartesian",
+            "condition"
+        ]
+    },
+    {
+        "id": "eval-012",
+        "description": "Division by zero",
+        "language": "python",
+        "code": "def average(numbers):\n    return sum(numbers) / len(numbers)\n\nresult = average([])",
+        "diagnostics": [
+            {
+                "message": "ZeroDivisionError: division by zero",
+                "severity": "error",
+                "line": 2
+            }
+        ],
+        "expected_category": "runtime_error",
+        "expected_problem_type": "runtime_error",
+        "should_generate_direct_solution": false,
+        "expected_question_contains": [
+            "empty",
+            "length",
+            "zero",
+            "guard"
+        ]
+    }
+]
