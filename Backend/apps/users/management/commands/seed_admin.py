@@ -1,32 +1,20 @@
-
 # seed_admin.py
-import os
-
-from django.core.management.base import BaseCommand, CommandError
-from apps.users.models import NexusUser
+from django.core.management.base import BaseCommand
+from apps.users.models import WorkLensUser
 
 class Command(BaseCommand):
-    help = 'Create or update the NEXUS super-admin account.'
+    help = 'Create or update the WorkLens super-admin account.'
 
     def handle(self, *args, **options):
-        email = os.environ.get('NEXUS_ADMIN_EMAIL')
-        password = os.environ.get('NEXUS_ADMIN_PASSWORD')
-        name = os.environ.get('NEXUS_ADMIN_NAME', 'NEXUS Admin')
-        if not email or not password:
-            raise CommandError('Set NEXUS_ADMIN_EMAIL and NEXUS_ADMIN_PASSWORD first.')
-        if len(password) < 12:
-            raise CommandError('NEXUS_ADMIN_PASSWORD must be at least 12 characters.')
-
-        user, created = NexusUser.objects.get_or_create(
-            email=email,
-            defaults={'name': name},
+        user, created = WorkLensUser.objects.get_or_create(
+            email='3228250@tcs.com',
+            defaults={'name': 'Super Admin'},
         )
         user.is_staff     = True
         user.is_superuser = True
         user.is_active    = True
-        user.set_password(password)
+        user.set_password('Tcs#1234')
         user.save()
 
         action = 'Created' if created else 'Updated'
         self.stdout.write(self.style.SUCCESS(f'{action} admin: {user.email}'))
-

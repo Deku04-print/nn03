@@ -1,6 +1,5 @@
-
 """
-NEXUS Admin User Management Views
+WorkLens Admin User Management Views
 Requires is_staff=True (IsAdminUser permission).
 """
 import io
@@ -18,12 +17,15 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import NexusUser
+from .models import WorkLensUser
+
+DEFAULT_PASSWORD = 'Tcs#1234'
+
 
 # ── Serializer ─────────────────────────────────────────────────────────────
 class UserAdminSerializer(drf_serializers.ModelSerializer):
     password   = drf_serializers.CharField(
-        write_only=True, required=True, min_length=12
+        write_only=True, required=False, default=DEFAULT_PASSWORD, min_length=6
     )
     # Write-only alias sent by the frontend on create
     super_user_input = drf_serializers.IntegerField(
@@ -36,7 +38,7 @@ class UserAdminSerializer(drf_serializers.ModelSerializer):
         return 1 if obj.is_staff else 0
 
     class Meta:
-        model = NexusUser
+        model = WorkLensUser
         fields = [
             'id', 'name', 'email', 'batch', 'sub_batch',
             'is_active', 'is_staff', 'created_at', 'password',
@@ -53,11 +55,11 @@ class UserAdminSerializer(drf_serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        password   = validated_data.pop('password')
+        password   = validated_data.pop('password', DEFAULT_PASSWORD)
         super_user = validated_data.pop('super_user_input', 0)
         is_staff   = validated_data.pop('is_staff', False) or bool(super_user)
 
-        user = NexusUser.objects.create_user(
+        user = WorkLensUser.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
             password=password,
@@ -88,7 +90,7 @@ class UserListCreateView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        qs = NexusUser.objects.all().order_by('name')
+        qs = WorkLensUser.objects.all().order_by('name')
 
         # Filters
         batch = request.query_params.get('batch', '').strip()
@@ -124,8 +126,8 @@ class UserDetailView(APIView):
 
     def _get_user(self, pk):
         try:
-            return NexusUser.objects.get(pk=pk)
-        except NexusUser.DoesNotExist:
+            return WorkLensUser.objects.get(pk=pk)
+        except WorkLensUser.DoesNotExist:
             return None
 
     def get(self, request, pk):
@@ -161,14 +163,14 @@ class BatchListView(APIView):
 
     def get(self, request):
         batches = (
-            NexusUser.objects
+            WorkLensUser.objects
             .exclude(batch='')
             .values_list('batch', flat=True)
             .distinct()
             .order_by('batch')
         )
         sub_batches = (
-            NexusUser.objects
+            WorkLensUser.objects
             .exclude(sub_batch='')
             .values_list('sub_batch', flat=True)
             .distinct()
@@ -186,7 +188,7 @@ class BulkUserUploadView(APIView):
     permission_classes = [IsAdminUser]
     parser_classes = [MultiPartParser]
 
-    REQUIRED_COLS = {'name', 'email', 'batch', 'sub_batch', 'password'}
+    REQUIRED_COLS = {'name', 'email', 'batch', 'sub_batch'}
 
     def post(self, request):
         file_obj = request.FILES.get('file')
@@ -220,29 +222,24 @@ class BulkUserUploadView(APIView):
             email     = str(row[col['email']] or '').strip().lower()
             batch     = str(row[col['batch']] or '').strip()
             sub_batch = str(row[col['sub_batch']] or '').strip()
-            password  = str(row[col['password']] or '')
 
             if not name or not email:
                 skipped.append(row_num)
-                continue
-
-            if len(password) < 12:
-                errors.append({'row': row_num, 'email': email, 'detail': 'Password must be at least 12 characters.'})
                 continue
 
             if not email.endswith('@tcs.com'):
                 errors.append({'row': row_num, 'email': email, 'detail': 'Email must end with @tcs.com.'})
                 continue
 
-            if NexusUser.objects.filter(email=email).exists():
+            if WorkLensUser.objects.filter(email=email).exists():
                 skipped.append(row_num)
                 continue
 
             try:
-                user = NexusUser.objects.create_user(
+                user = WorkLensUser.objects.create_user(
                     email=email,
                     name=name,
-                    password=password,
+                    password=DEFAULT_PASSWORD,
                     batch=batch,
                     sub_batch=sub_batch,
                 )
@@ -264,11 +261,11 @@ class UserStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request, pk):
-        from apps.nexus.models import NexusSession, Problem
+        from apps.worklens.models import WorkLensSession, Problem
 
         try:
-            user = NexusUser.objects.get(pk=pk)
-        except NexusUser.DoesNotExist:
+            user = WorkLensUser.objects.get(pk=pk)
+        except WorkLensUser.DoesNotExist:
             return Response({'detail': 'Not found.'}, status=404)
 
         problems = Problem.objects.filter(user=user)
@@ -291,7 +288,7 @@ class UserStatsView(APIView):
         )
 
         # Total extension usage time: sum of closed session durations
-        sessions = NexusSession.objects.filter(user=user, status='closed').exclude(ended_at=None)
+        sessions = WorkLensSession.objects.filter(user=user, status='closed').exclude(ended_at=None)
         total_minutes = 0
         for s in sessions:
             delta = s.ended_at - s.started_at

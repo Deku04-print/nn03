@@ -1,15 +1,12 @@
-
 """
-NEXUS Request Serializers — validate all inbound payloads before AI processing.
+WorkLens Request Serializers — validate all inbound payloads before AI processing.
 """
 from rest_framework import serializers
 
 
 class DiagnosticSerializer(serializers.Serializer):
     message  = serializers.CharField(max_length=2000)
-    severity = serializers.ChoiceField(
-        choices=['error', 'warning', 'information', 'hint'], default='error', required=False,
-    )
+    severity = serializers.CharField(default='error', required=False)
     line     = serializers.IntegerField(min_value=0, default=0, required=False)
     column   = serializers.IntegerField(min_value=0, required=False, default=0)
 

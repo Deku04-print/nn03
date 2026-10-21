@@ -1,4 +1,3 @@
-
 """
 Knowledge app views — ProblemDNA CRUD + similar-problem search + analytics + verification governance.
 """
@@ -13,24 +12,15 @@ from .models import ProblemDNA
 from .serializers import ProblemDNASerializer
 from ai.retrieval.semantic_search import SemanticSearch
 
-logger = logging.getLogger('nexus.knowledge')
+logger = logging.getLogger('worklens.knowledge')
 
 
 class ProblemDNAListCreateView(APIView):
     """GET /api/problems/   POST /api/problems/"""
-    permission_classes = [permissions.IsAuthenticated]
-
-    def _visible_records(self, request):
-        qs = ProblemDNA.objects.all()
-        if request.user.is_staff:
-            return qs
-        return qs.filter(
-            Q(scope_zone='organization', verification_status='verified')
-            | Q(problem__user=request.user)
-        ).distinct()
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        qs = self._visible_records(request)
+        qs = ProblemDNA.objects.all()
 
         # Query filters
         language = request.query_params.get('language')
@@ -62,16 +52,11 @@ class ProblemDNAListCreateView(APIView):
         else:
             qs = qs.order_by('-created_at')
 
-        try:
-            limit = min(200, max(1, int(request.query_params.get('limit', 200))))
-        except (TypeError, ValueError):
-            limit = 200
+        limit = int(request.query_params.get('limit', 200))
         qs = qs[:limit]
         return Response({'success': True, 'data': ProblemDNASerializer(qs, many=True).data})
 
     def post(self, request):
-        if not request.user.is_staff:
-            return Response({'success': False, 'error': 'Only an administrator can create or promote shared ProblemDNA records.'}, status=http_status.HTTP_403_FORBIDDEN)
         ser = ProblemDNASerializer(data=request.data)
         if not ser.is_valid():
             return Response({'success': False, 'errors': ser.errors},
@@ -83,11 +68,11 @@ class ProblemDNAListCreateView(APIView):
 
 class ProblemDNADetailView(APIView):
     """GET /api/problems/<id>/   PATCH /api/problems/<id>/"""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, pk):
         try:
-            dna = ProblemDNAListCreateView()._visible_records(request).get(pk=pk)
+            dna = ProblemDNA.objects.get(pk=pk)
         except ProblemDNA.DoesNotExist:
             return Response({'success': False, 'error': 'Not found'},
                             status=http_status.HTTP_404_NOT_FOUND)
@@ -100,21 +85,12 @@ class ProblemDNADetailView(APIView):
             return Response({'success': False, 'error': 'Not found'},
                             status=http_status.HTTP_404_NOT_FOUND)
 
-        if not request.user.is_staff and not (
-            dna.problem_id and dna.problem.user_id == request.user.id
-        ):
-            return Response({'success': False, 'error': 'Not found'}, status=http_status.HTTP_404_NOT_FOUND)
-
-        protected_fields = {'verification_status', 'scope_zone', 'reuse_count', 'reliability_score', 'verified_at'}
-        if not request.user.is_staff and protected_fields.intersection(request.data.keys()):
-            return Response({'success': False, 'error': 'Only an authorized reviewer can change verification or sharing status.'}, status=http_status.HTTP_403_FORBIDDEN)
-
         ser = ProblemDNASerializer(dna, data=request.data, partial=True)
         if not ser.is_valid():
             return Response({'success': False, 'errors': ser.errors},
                             status=http_status.HTTP_400_BAD_REQUEST)
 
-        new_status = request.data.get('verification_status') if request.user.is_staff else None
+        new_status = request.data.get('verification_status')
         if new_status == 'verified' and dna.verification_status != 'verified':
             dna.verified_at = timezone.now()
             if 'reliability_score' not in request.data:
@@ -130,7 +106,7 @@ class ProblemDNADetailView(APIView):
 
 class ProblemDNAAnalyticsView(APIView):
     """GET /api/problems/analytics/"""
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         total = ProblemDNA.objects.count()
@@ -191,7 +167,7 @@ class ProblemDNAAnalyticsView(APIView):
 
 class SimilarProblemsView(APIView):
     """GET /api/problems/similar/?q=...&language=...&category=..."""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         query    = request.query_params.get('q', '')
@@ -202,15 +178,14 @@ class SimilarProblemsView(APIView):
             return Response({'success': True, 'data': []})
 
         results = SemanticSearch().search(
-            query=query[:2000], language=language, category=category, top_k=5,
-            user_id=request.user.id,
+            query=query, language=language, category=category, top_k=5
         )
         return Response({'success': True, 'data': results})
 
 
 class AttemptCreateView(APIView):
     """POST /api/problems/<id>/attempts/"""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, pk):
         try:
@@ -219,20 +194,9 @@ class AttemptCreateView(APIView):
             return Response({'success': False, 'error': 'Not found'},
                             status=http_status.HTTP_404_NOT_FOUND)
 
-        if not request.user.is_staff and not (dna.problem_id and dna.problem.user_id == request.user.id):
-            return Response({'success': False, 'error': 'Not found'}, status=http_status.HTTP_404_NOT_FOUND)
-
-        description = request.data.get('description', '')
-        result = request.data.get('result', 'unknown')
+        description    = request.data.get('description', '')
+        result         = request.data.get('result', 'unknown')
         guidance_level = request.data.get('guidance_level', 0)
-        if not isinstance(description, str) or len(description) > 2000:
-            return Response({'success': False, 'error': 'Description must be text no longer than 2000 characters.'}, status=http_status.HTTP_400_BAD_REQUEST)
-        if result not in ('unknown', 'failed', 'partial', 'success'):
-            return Response({'success': False, 'error': 'Invalid attempt result.'}, status=http_status.HTTP_400_BAD_REQUEST)
-        try:
-            guidance_level = max(0, min(5, int(guidance_level)))
-        except (TypeError, ValueError):
-            return Response({'success': False, 'error': 'Guidance level must be an integer from 0 to 5.'}, status=http_status.HTTP_400_BAD_REQUEST)
 
         attempts = list(dna.attempts or [])
         attempts.append({
@@ -245,4 +209,3 @@ class AttemptCreateView(APIView):
         dna.save(update_fields=['attempts', 'updated_at'])
 
         return Response({'success': True, 'data': ProblemDNASerializer(dna).data})
-

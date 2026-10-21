@@ -1,11 +1,17 @@
-
 """
 ProblemDNA — structured knowledge record for every debugging problem.
 Lifecycle: created → attempts recorded → root cause identified → verified → embedded.
 """
 import uuid
 from django.db import models
-from apps.nexus.models import Problem
+from apps.worklens.models import Problem
+
+try:
+    from pgvector.django import VectorField as _VectorField
+    _PGVECTOR_AVAILABLE = True
+except ImportError:
+    _VectorField = None
+    _PGVECTOR_AVAILABLE = False
 
 
 class ProblemDNA(models.Model):
@@ -51,15 +57,18 @@ class ProblemDNA(models.Model):
     fix_snippet         = models.TextField(blank=True, default='')
     embedding_text      = models.TextField(blank=True)     # normalised text used for embedding
 
-    # JSON vectors keep semantic retrieval portable without requiring pgvector.
-    embedding            = models.JSONField(null=True, blank=True)
-    embedding_model      = models.CharField(max_length=100, blank=True, default='')
+    # pgvector column — 384 dims matches all-MiniLM-L6-v2
+    # Gracefully omitted when pgvector package is not installed (SQLite/dev)
+    if _PGVECTOR_AVAILABLE:
+        embedding = _VectorField(dimensions=384, null=True, blank=True)
+    else:
+        embedding = models.JSONField(null=True, blank=True)  # dev fallback
 
     created_at          = models.DateTimeField(auto_now_add=True)
     updated_at          = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'nexus_problem_dna'
+        db_table = 'wl_problem_dna'
 
     def build_embedding_text(self) -> str:
         """Produce a normalised plain-text representation for embedding."""
@@ -79,4 +88,3 @@ class ProblemDNA(models.Model):
 
     def __str__(self):
         return f"ProblemDNA [{self.category}] {self.language} — {self.id}"
-

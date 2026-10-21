@@ -1,4 +1,3 @@
-
 """
 ProblemDNA DRF Serializer.
 """
@@ -19,4 +18,3 @@ class ProblemDNASerializer(serializers.ModelSerializer):
             'verified_at', 'fix_snippet', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
-
