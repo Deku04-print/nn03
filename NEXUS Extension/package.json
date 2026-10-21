@@ -1,0 +1,223 @@
+{
+  "name": "worklens",
+  "displayName": "WorkLens",
+  "description": "AI-powered developer mentor & autonomous workspace agents — progressive debugging, architecture synthesis, and executive documentation.",
+  "version": "0.1.9",
+  "publisher": "worklens",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Education",
+    "Linters"
+  ],
+  "keywords": [
+    "ai",
+    "mentor",
+    "debugging",
+    "documentation",
+    "mermaid",
+    "architecture",
+    "pdf",
+    "testing",
+    "pytest",
+    "jest"
+  ],
+  "icon": "media/icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "worklens.ask",
+        "title": "Ask WorkLens",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.guide",
+        "title": "Guide Me to Debug",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.hint",
+        "title": "Give Me a Hint",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.explain",
+        "title": "Explain This Problem",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.verify",
+        "title": "Verify My Fix",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.signIn",
+        "title": "WorkLens: Sign in",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.signOut",
+        "title": "WorkLens: Sign out",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.openPanel",
+        "title": "Open WorkLens Panel",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.generateDocs",
+        "title": "WorkLens: Generate Workspace Documentation (.md, .mmd, .pdf)",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.generateTests",
+        "title": "WorkLens: Generate Test Suite (PyTest, Jest, Vitest, JUnit)",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.sendTerminalToWorklens",
+        "title": "Send to WorkLens (Analyze Error)",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.explainTerminalError",
+        "title": "WorkLens: Explain Terminal Error",
+        "category": "WorkLens"
+      },
+      {
+        "command": "worklens.fixTerminalError",
+        "title": "WorkLens: How to Fix This Terminal Error",
+        "category": "WorkLens"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "worklens.openPanel",
+        "key": "F9",
+        "when": "editorFocus"
+      },
+      {
+        "command": "worklens.sendTerminalToWorklens",
+        "key": "Alt+W",
+        "mac": "cmd+alt+w",
+        "when": "terminalFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "worklens.submenu",
+          "group": "worklens@1"
+        }
+      ],
+      "terminal/context": [
+        {
+          "submenu": "worklens.terminal.submenu",
+          "group": "worklens@1"
+        },
+        {
+          "command": "worklens.sendTerminalToWorklens",
+          "group": "worklens@2"
+        }
+      ],
+      "worklens.submenu": [
+        {
+          "command": "worklens.ask",
+          "group": "1_primary@1"
+        },
+        {
+          "command": "worklens.guide",
+          "group": "1_primary@2"
+        },
+        {
+          "command": "worklens.explain",
+          "group": "1_primary@3"
+        },
+        {
+          "command": "worklens.hint",
+          "group": "1_primary@4"
+        },
+        {
+          "command": "worklens.verify",
+          "group": "2_verify@1"
+        }
+      ],
+      "worklens.terminal.submenu": [
+        {
+          "command": "worklens.sendTerminalToWorklens",
+          "group": "1_primary@1"
+        },
+        {
+          "command": "worklens.explainTerminalError",
+          "group": "1_primary@2"
+        },
+        {
+          "command": "worklens.fixTerminalError",
+          "group": "1_primary@3"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "worklens.submenu",
+        "label": "WorkLens"
+      },
+      {
+        "id": "worklens.terminal.submenu",
+        "label": "WorkLens"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "worklens-sidebar",
+          "title": "WorkLens",
+          "icon": "media/worklens-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "worklens-sidebar": [
+        {
+          "type": "webview",
+          "id": "worklens.mentorPanel",
+          "name": "WorkLens Mentor",
+          "icon": "media/worklens-icon.svg",
+          "contextualTitle": "WorkLens"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "WorkLens",
+      "properties": {
+        "worklens.backendUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000/",
+          "description": "WorkLens Django backend URL"
+        },
+        "worklens.authToken": {
+          "type": "string",
+          "default": "",
+          "description": "JWT authentication token for WorkLens backend"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.8",
+    "mocha": "^10.2.0"
+  },
+  "dependencies": {}
+}

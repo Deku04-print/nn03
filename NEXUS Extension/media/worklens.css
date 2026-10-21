@@ -1,0 +1,3185 @@
+/* WorkLens Mentor Panel — CSS
+   Matches the VS Code sidebar dark aesthetic from the product screenshot.
+   Uses VS Code CSS variables for automatic theme compatibility.
+*/
+
+/* ── Design tokens ─────────────────────────────────────── */
+:root {
+  --wl-accent: #4F8EF7;
+  --wl-accent-dim: rgba(79, 142, 247, 0.14);
+  --wl-success: #4CAF50;
+  --wl-warning: #FFA726;
+  --wl-error: #EF5350;
+  --wl-radius: 6px;
+  --wl-radius-sm: 3px;
+  --wl-transition: 0.15s ease;
+  --wl-avatar-bg: #1e6fd9;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.wl-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body {
+  font-family: var(--vscode-font-family, 'Segoe UI', sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  color: var(--vscode-foreground);
+  background: var(--vscode-sideBar-background);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+.wl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 6px;
+  flex-shrink: 0;
+}
+
+.wl-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wl-brand-svg-icon {
+  color: var(--wl-accent, #3b82f6);
+  flex-shrink: 0;
+}
+
+.wl-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--vscode-foreground);
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.wl-brand-name-sub {
+  font-weight: 500;
+  opacity: 0.85;
+  margin-left: 1px;
+}
+
+/* ── Login Card Brand Elements ── */
+.wl-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.wl-login-brand-icon {
+  color: var(--wl-accent, #3b82f6);
+  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.25));
+}
+
+.wl-login-brand-title {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--vscode-foreground);
+  margin: 0;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.wl-login-brand-title-sub {
+  font-weight: 500;
+  opacity: 0.85;
+  margin-left: 1px;
+}
+
+/* ── Unauthenticated State: Show ONLY the login view ──────── */
+body.wl-not-signed-in .wl-header-actions,
+body.wl-not-signed-in .wl-tabs,
+body.wl-not-signed-in #wl-input-bar,
+body.wl-not-signed-in #wl-context-card,
+body.wl-not-signed-in #wl-project-history,
+body.wl-not-signed-in #wl-conversation,
+body.wl-not-signed-in .wl-header {
+  display: none !important;
+}
+
+body.wl-not-signed-in .wl-panel {
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+body.wl-not-signed-in #wl-state-idle {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 24px 16px;
+  margin: 0;
+}
+
+.wl-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ── Icon buttons ─────────────────────────────────────── */
+.wl-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  padding: 4px;
+  border-radius: var(--wl-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--wl-transition), background var(--wl-transition);
+}
+
+.wl-icon-btn:hover {
+  color: var(--vscode-foreground);
+  background: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.07));
+}
+
+/* ── Tab bar ───────────────────────────────────────────── */
+.wl-tabs {
+  display: flex;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.wl-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--vscode-descriptionForeground);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 10px 5px;
+  cursor: pointer;
+  transition: color var(--wl-transition), border-color var(--wl-transition);
+  margin-bottom: -1px;
+}
+
+.wl-tab:hover {
+  color: var(--vscode-foreground);
+}
+
+.wl-tab-active {
+  color: var(--vscode-foreground) !important;
+  border-bottom-color: var(--wl-accent);
+}
+
+/* ── Panel containers ─────────────────────────────────── */
+.wl-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── States ────────────────────────────────────────────── */
+.wl-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 14px 12px 6px;
+}
+
+.wl-state::-webkit-scrollbar {
+  width: 4px;
+}
+
+.wl-state::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wl-state::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 2px;
+}
+
+.wl-hidden {
+  display: none !important;
+}
+
+/* ── Login card (replaces old welcome/idle) ────────────── */
+.wl-login-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px 12px;
+  max-width: 260px;
+  margin: 12px auto 0;
+}
+
+.wl-login-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4F8EF7 0%, #1e6fd9 100%);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.02em;
+  box-shadow: 0 2px 12px rgba(79, 142, 247, 0.3);
+}
+
+.wl-login-title {
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--vscode-foreground);
+}
+
+.wl-login-subtitle {
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 4px;
+}
+
+#wl-login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wl-login-input {
+  width: 100%;
+  height: 32px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--wl-radius-sm);
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color var(--wl-transition);
+}
+
+.wl-login-input:focus {
+  border-color: var(--wl-accent);
+}
+
+.wl-login-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.wl-login-btn {
+  width: 100%;
+  margin-top: 4px;
+  height: 32px;
+}
+
+.wl-login-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.wl-login-error {
+  font-size: 11px;
+  color: var(--wl-error);
+  text-align: center;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ── Loading ──────────────────────────────────────────── */
+.wl-thinking {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 24px auto 10px;
+}
+
+.wl-thinking span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wl-accent);
+  animation: wl-bounce 1.2s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+.wl-thinking span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.wl-thinking span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wl-bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: scale(1.1);
+    opacity: 1.0;
+  }
+}
+
+.wl-loading-text {
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+/* ── Error ────────────────────────────────────────────── */
+.wl-error-icon {
+  font-size: 28px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.wl-error-text {
+  font-size: 12px;
+  color: var(--wl-error);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── Chat History ─────────────────────────────────────── */
+.wl-chat-history {
+  margin-bottom: 8px;
+}
+
+.wl-history-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 6px;
+}
+
+.wl-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wl-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--wl-radius);
+  cursor: pointer;
+  transition: background var(--wl-transition), border-color var(--wl-transition);
+}
+
+.wl-history-item:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.07));
+  border-color: var(--wl-accent);
+}
+
+.wl-history-lang {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: var(--wl-radius-sm);
+  background: var(--wl-accent-dim);
+  color: var(--wl-accent);
+  flex-shrink: 0;
+}
+
+.wl-history-desc {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--vscode-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-history-time {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground);
+  flex-shrink: 0;
+}
+
+/* ── Project-scoped chat history ─────────────────────── */
+.wl-project-history {
+  margin-bottom: 10px;
+  animation: wl-fadeIn 0.2s ease;
+}
+
+.wl-project-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 12px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  border: 1px dashed var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--wl-radius);
+  margin-top: 4px;
+}
+
+.wl-project-history-empty p {
+  font-size: 11.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Selected Code in mentor bubble ───────────────────── */
+.wl-selected-code-section {
+  margin-bottom: 2px;
+}
+
+.wl-selected-code {
+  margin: 4px 0 0;
+  padding: 7px 9px;
+  background: var(--vscode-editor-background, rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--wl-radius-sm);
+  font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Consolas', monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--vscode-editor-foreground, var(--vscode-foreground));
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.wl-selected-code::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+.wl-selected-code::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 2px;
+}
+
+/* ── Vector DB match indicator ────────────────────────── */
+.wl-vdb-match {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.06));
+}
+
+.wl-vdb-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.wl-vdb-icon {
+  font-size: 12px;
+}
+
+.wl-vdb-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vscode-descriptionForeground);
+  flex: 1;
+}
+
+.wl-vdb-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--wl-radius-sm);
+}
+
+.wl-vdb-found {
+  background: rgba(76, 175, 80, 0.14);
+  color: var(--wl-success);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.wl-vdb-new {
+  background: rgba(255, 167, 38, 0.14);
+  color: var(--wl-warning);
+  border: 1px solid rgba(255, 167, 38, 0.3);
+}
+
+.wl-vdb-bar-track {
+  height: 5px;
+  background: var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.1));
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+
+.wl-vdb-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--wl-accent) 0%, var(--wl-success) 100%);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.wl-vdb-percent {
+  font-size: 10.5px;
+  color: var(--vscode-descriptionForeground);
+  font-weight: 600;
+}
+
+/* ── Captured Context card ────────────────────────────── */
+.wl-context-card {
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--wl-radius);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.wl-context-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.08));
+}
+
+.wl-context-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.wl-copy-btn {
+  color: var(--vscode-descriptionForeground);
+}
+
+.wl-context-meta {
+  padding: 7px 10px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wl-context-row {
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  align-items: baseline;
+}
+
+.wl-context-row dt {
+  color: var(--vscode-descriptionForeground);
+  flex-shrink: 0;
+  min-width: 90px;
+}
+
+.wl-context-row dd {
+  color: var(--vscode-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+}
+
+.wl-context-label {
+  padding: 4px 10px 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.wl-context-code {
+  margin: 0 10px 8px;
+  padding: 6px 8px;
+  background: var(--vscode-editor-background, rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--wl-radius-sm);
+  font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Consolas', monospace);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--vscode-editor-foreground, var(--vscode-foreground));
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.wl-context-code::-webkit-scrollbar {
+  height: 3px;
+}
+
+.wl-context-code::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 2px;
+}
+
+.wl-context-diagnostics {
+  border-top: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.07));
+  padding-top: 4px;
+}
+
+.wl-context-source-row {
+  padding: 2px 10px 6px;
+}
+
+.wl-diag-list {
+  padding: 2px 10px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wl-diag-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+}
+
+.wl-diag-badge {
+  background: rgba(239, 83, 80, 0.14);
+  color: var(--wl-error);
+  border: 1px solid rgba(239, 83, 80, 0.35);
+  border-radius: var(--wl-radius-sm);
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.wl-diag-msg {
+  color: var(--vscode-foreground);
+  font-size: 11.5px;
+}
+
+/* ── Conversation thread ──────────────────────────────── */
+.wl-conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+/* ── Chat message bubbles ─────────────────────────────── */
+.wl-message {
+  display: flex;
+  gap: 9px;
+  animation: wl-fadeIn 0.2s ease;
+}
+
+@keyframes wl-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.wl-msg-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--wl-avatar-bg);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.wl-msg-avatar.user-avatar {
+  background: var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.18));
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.wl-msg-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wl-msg-sender {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--vscode-foreground);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wl-msg-sender .wl-msg-role-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--wl-accent);
+  opacity: 0.75;
+}
+
+.wl-msg-content {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--vscode-foreground);
+  white-space: pre-wrap;
+}
+
+/* WorkLens message bubble */
+.wl-message-mentor .wl-msg-content-box {
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.09));
+  border-radius: 0 var(--wl-radius) var(--wl-radius) var(--wl-radius);
+  padding: 9px 11px;
+}
+
+/* User message bubble */
+.wl-message-user .wl-msg-content-box {
+  background: rgba(79, 142, 247, 0.07);
+  border: 1px solid rgba(79, 142, 247, 0.18);
+  border-radius: var(--wl-radius) 0 var(--wl-radius) var(--wl-radius);
+  padding: 8px 11px;
+}
+
+/* ── Mentor card sections inside bubble ───────────────── */
+.wl-card-section {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.05));
+}
+
+.wl-card-section:first-child {
+  padding-top: 0;
+}
+
+.wl-card-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.wl-section-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.wl-section-icon {
+  font-size: 11px;
+}
+
+.wl-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #ffffff;
+}
+
+.wl-section-body {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--vscode-foreground);
+  white-space: pre-wrap;
+}
+
+.wl-question-body {
+  color: var(--wl-accent);
+  font-style: italic;
+}
+
+/* ── Next steps list ──────────────────────────────────── */
+.wl-steps-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--vscode-foreground);
+}
+
+.wl-steps-list li {
+  margin-bottom: 1px;
+}
+
+.wl-steps-list li::marker {
+  color: var(--wl-accent);
+  font-weight: 700;
+}
+
+/* ── Confidence signal ────────────────────────────────── */
+.wl-confidence-signal {
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wl-success);
+}
+
+/* ── Reaction row ─────────────────────────────────────── */
+.wl-reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.wl-react-btn {
+  background: transparent;
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--wl-radius-sm);
+  color: var(--vscode-descriptionForeground);
+  font-size: 13px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background var(--wl-transition), border-color var(--wl-transition), transform var(--wl-transition);
+  line-height: 1;
+}
+
+.wl-react-btn:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.07));
+  border-color: var(--vscode-foreground);
+  transform: scale(1.12);
+}
+
+.wl-react-btn.active {
+  background: var(--wl-accent-dim);
+  border-color: var(--wl-accent);
+}
+
+/* ── Bottom input bar (Modern Capsule Input) ───────────── */
+.wl-input-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--vscode-sideBarSectionHeader-border, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+  background: var(--vscode-sideBar-background);
+}
+
+/* ── Input Toolbar (Mode + @ File + Voice) ─────────────── */
+.wl-input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.wl-input-toolbar .wl-mode-toggle {
+  margin-bottom: 0;
+}
+
+.wl-input-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Tool Pill Buttons (@ File, Voice) */
+.wl-tool-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.1));
+  color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.7));
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.wl-tool-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vscode-foreground, #fff);
+  border-color: var(--wl-accent, #6366f1);
+}
+
+.wl-at-icon {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--wl-accent, #6366f1);
+}
+
+/* Tagged file pills container */
+.wl-tagged-files-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0;
+  animation: wl-fadeIn 0.15s ease;
+}
+
+.wl-file-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: var(--wl-accent, #6366f1);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-weight: 500;
+}
+
+.wl-file-tag-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.75;
+}
+.wl-file-tag-close:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
+/* Inline Voice / Action Icon in Input Capsule */
+.wl-input-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--vscode-input-placeholderForeground, rgba(255, 255, 255, 0.45));
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  flex-shrink: 0;
+}
+
+.wl-input-icon-btn:hover {
+  color: var(--vscode-foreground, #fff);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Voice Active (Recording / Listening state) */
+.wl-voice-active {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  animation: wl-voice-pulse 1.3s ease-in-out infinite alternate !important;
+}
+
+@keyframes wl-voice-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+    transform: scale(1.05);
+  }
+}
+
+.wl-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.wl-input-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: var(--vscode-input-background, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--vscode-input-border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  padding: 3px 4px 3px 12px;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.wl-input-row:focus-within {
+  border-color: var(--wl-accent, #6366f1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.22), 0 4px 14px rgba(0, 0, 0, 0.2);
+  background: var(--vscode-input-background, rgba(255, 255, 255, 0.07));
+}
+
+.wl-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  background: transparent !important;
+  color: var(--vscode-input-foreground, inherit);
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.wl-input::placeholder {
+  color: var(--vscode-input-placeholderForeground, rgba(255, 255, 255, 0.45));
+  font-size: 12.5px;
+}
+
+.wl-send-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--wl-accent, #6366f1);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.wl-send-btn:hover {
+  opacity: 0.95;
+  transform: scale(1.04);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.wl-send-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Send button: Generating / Circling Red Stop Button ── */
+.wl-send-btn.wl-generating {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5) !important;
+  animation: wl-pulse-stop 2s infinite alternate;
+}
+
+.wl-send-btn.wl-generating:hover {
+  background: #dc2626 !important;
+  transform: scale(1.06);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.7) !important;
+}
+
+.wl-stop-inner {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wl-spinner-ring {
+  position: absolute;
+  inset: 0;
+  width: 22px;
+  height: 22px;
+  animation: wl-spin-btn 0.85s linear infinite;
+  transform-origin: center center;
+}
+
+.wl-stop-square {
+  position: relative;
+  z-index: 2;
+  width: 8px;
+  height: 8px;
+  fill: #ffffff;
+}
+
+@keyframes wl-spin-btn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes wl-pulse-stop {
+  0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+  100% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.7); }
+}
+
+/* ── Progressive Typewriter Cursor ─────────────────────── */
+.wl-typing-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  background-color: var(--wl-accent, #6366f1);
+  margin-left: 3px;
+  vertical-align: -2px;
+  border-radius: 1px;
+  animation: wl-cursor-blink 0.7s infinite;
+}
+
+@keyframes wl-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Buttons ──────────────────────────────────────────── */
+.wl-btn {
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--wl-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--wl-transition), transform var(--wl-transition);
+  font-family: inherit;
+}
+
+.wl-btn:active {
+  transform: scale(0.97);
+}
+
+.wl-btn-primary {
+  background: var(--wl-accent);
+  color: #fff;
+}
+
+.wl-btn-primary:hover {
+  opacity: 0.88;
+}
+
+.wl-btn-secondary {
+  background: var(--vscode-button-secondaryBackground, rgba(255, 255, 255, 0.1));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+}
+
+.wl-btn-secondary:hover {
+  opacity: 0.8;
+}
+
+/* ── Details panel ────────────────────────────────────── */
+.wl-details-section {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wl-details-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wl-details-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.wl-details-value {
+  font-size: 12.5px;
+  color: var(--vscode-foreground);
+}
+
+/* ── Guidance dots (details panel) ───────────────────── */
+.wl-guidance-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.wl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.15));
+  border: 1.5px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.2));
+  transition: background var(--wl-transition), border-color var(--wl-transition);
+}
+
+.wl-dot.active {
+  background: var(--wl-accent);
+  border-color: var(--wl-accent);
+}
+
+.wl-dot.past {
+  background: rgba(79, 142, 247, 0.25);
+  border-color: rgba(79, 142, 247, 0.25);
+}
+
+.wl-dot.danger {
+  background: var(--wl-error);
+  border-color: var(--wl-error);
+}
+
+/* ── Restored session banner ──────────────────────────── */
+.wl-restore-banner {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wl-accent);
+  background: var(--wl-accent-dim);
+  border: 1px solid rgba(79, 142, 247, 0.25);
+  border-radius: var(--wl-radius-sm);
+  padding: 4px 10px;
+  text-align: center;
+  animation: wl-fadeIn 0.25s ease;
+}
+
+/* ── Theme overrides ──────────────────────────────────── */
+
+/* Light theme */
+body[data-wl-theme="light"] {
+  --vscode-foreground: #1e1e1e;
+  --vscode-descriptionForeground: #5a5a5a;
+  --vscode-sideBar-background: #f3f3f3;
+  --vscode-input-background: #ffffff;
+  --vscode-input-foreground: #1e1e1e;
+  --vscode-input-border: rgba(0, 0, 0, 0.20);
+  --vscode-input-placeholderForeground: #999999;
+  --vscode-editorWidget-background: rgba(0, 0, 0, 0.04);
+  --vscode-editorWidget-border: rgba(0, 0, 0, 0.12);
+  --vscode-editor-background: #ffffff;
+  --vscode-editor-foreground: #1e1e1e;
+  --vscode-list-hoverBackground: rgba(0, 0, 0, 0.06);
+  --vscode-toolbar-hoverBackground: rgba(0, 0, 0, 0.07);
+  --vscode-menu-background: #ffffff;
+  --vscode-menu-border: #d0d0d0;
+  --vscode-menu-foreground: #1e1e1e;
+  --vscode-menu-selectionBackground: rgba(0, 0, 0, 0.08);
+  --vscode-menu-selectionForeground: #000000;
+  --vscode-button-secondaryBackground: rgba(0, 0, 0, 0.08);
+  --vscode-button-secondaryForeground: #1e1e1e;
+  --vscode-scrollbarSlider-background: rgba(0, 0, 0, 0.20);
+  --vscode-sideBarSectionHeader-border: rgba(0, 0, 0, 0.10);
+  --wl-avatar-bg: #1e6fd9;
+}
+
+body[data-wl-theme="light"] .wl-message-mentor .wl-msg-content-box {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.10);
+}
+
+body[data-wl-theme="light"] .wl-message-user .wl-msg-content-box {
+  background: rgba(79, 142, 247, 0.10);
+  border-color: rgba(79, 142, 247, 0.22);
+}
+
+body[data-wl-theme="light"] .wl-section-label {
+  color: #1e1e1e;
+}
+
+/* Dark theme (re-states defaults so switching back from light always works) */
+body[data-wl-theme="dark"] {
+  --vscode-foreground: #cccccc;
+  --vscode-descriptionForeground: #9d9d9d;
+  --vscode-sideBar-background: #252526;
+  --vscode-input-background: #3c3c3c;
+  --vscode-input-foreground: #cccccc;
+  --vscode-input-border: rgba(255, 255, 255, 0.12);
+  --vscode-input-placeholderForeground: #6b6b6b;
+  --vscode-editorWidget-background: rgba(255, 255, 255, 0.04);
+  --vscode-editorWidget-border: rgba(255, 255, 255, 0.09);
+  --vscode-editor-background: #1e1e1e;
+  --vscode-editor-foreground: #d4d4d4;
+  --vscode-list-hoverBackground: rgba(255, 255, 255, 0.07);
+  --vscode-toolbar-hoverBackground: rgba(255, 255, 255, 0.07);
+  --vscode-menu-background: #252526;
+  --vscode-menu-border: #454545;
+  --vscode-menu-foreground: #cccccc;
+  --vscode-menu-selectionBackground: rgba(255, 255, 255, 0.08);
+  --vscode-menu-selectionForeground: #ffffff;
+  --vscode-button-secondaryBackground: rgba(255, 255, 255, 0.10);
+  --vscode-button-secondaryForeground: #cccccc;
+  --vscode-scrollbarSlider-background: rgba(255, 255, 255, 0.20);
+  --vscode-sideBarSectionHeader-border: rgba(255, 255, 255, 0.08);
+  --wl-avatar-bg: #1e6fd9;
+}
+
+/* ── Theme submenu ────────────────────────────────────── */
+.wl-theme-submenu {
+  border-top: 1px solid var(--vscode-menu-border, #454545);
+  background: var(--vscode-menu-background, #252526);
+}
+
+.wl-theme-submenu .wl-settings-item {
+  padding-left: 22px;
+  font-size: 11.5px;
+}
+
+/* Active (selected) theme indicator */
+.wl-settings-item--active::before {
+  content: '✓ ';
+  color: var(--wl-accent);
+  font-weight: 700;
+}
+
+
+
+/* ── Simple / Enhanced mode toggle ───────────────────── */
+.wl-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.1));
+  width: fit-content;
+  flex-shrink: 0;
+  margin-bottom: 5px;
+}
+
+.wl-mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color var(--wl-transition), background var(--wl-transition), box-shadow var(--wl-transition);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.wl-mode-btn:hover {
+  color: var(--vscode-foreground);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.wl-mode-btn.wl-mode-active {
+  background: var(--wl-accent);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 1px 6px rgba(79, 142, 247, 0.35);
+}
+
+/* ── Suggestion chips ─────────────────────────────────── */
+.wl-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0 2px 33px;
+  /* align with message body (past avatar) */
+  animation: wl-fadeIn 0.18s ease;
+}
+
+.wl-suggestion-chip {
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--wl-accent);
+  border-radius: 20px;
+  color: var(--wl-accent);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 11px;
+  cursor: pointer;
+  transition: background var(--wl-transition), color var(--wl-transition), transform 0.1s ease;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.wl-suggestion-chip:hover {
+  background: var(--wl-accent-dim);
+  transform: translateY(-1px);
+}
+
+.wl-suggestion-chip:active {
+  transform: translateY(0);
+  opacity: 0.8;
+}
+
+/* ── Analyzed Files section (Enhanced mode) ───────────── */
+.wl-analyzed-files {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.06));
+}
+
+.wl-analyzed-files-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 5px;
+}
+
+.wl-analyzed-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.wl-file-chip {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 10.5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--wl-radius-sm);
+  color: var(--vscode-descriptionForeground);
+  padding: 2px 7px;
+  cursor: default;
+}
+
+/* ── Inline code (markdown `code`) ───────────────────── */
+.wl-inline-code {
+  font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Consolas', monospace);
+  font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  padding: 0 4px;
+  color: var(--vscode-foreground);
+}
+
+/* ── Inline thinking bubble (follow-up loading indicator) */
+.wl-thinking-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px !important;
+}
+
+.wl-thinking-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.wl-thinking-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wl-accent);
+  animation: wl-bounce 1.2s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+.wl-thinking-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.wl-thinking-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.wl-thinking-text {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+  transition: opacity 0.15s ease;
+}
+
+/* ── Autocomplete dropdown ────────────────────────────── */
+
+/* Wrapper makes the dropdown position relative to the input row */
+.wl-input-wrap {
+  position: relative;
+}
+
+/* The dropdown itself — appears above the input bar */
+.wl-autocomplete-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--vscode-menu-background, #2d2d2d);
+  border: 1px solid var(--vscode-menu-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--wl-radius);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+  z-index: 100;
+  overflow-y: auto;
+  max-height: 220px;
+  animation: wl-fadeIn 0.12s ease;
+}
+
+.wl-autocomplete-dropdown::-webkit-scrollbar {
+  width: 3px;
+}
+
+.wl-autocomplete-dropdown::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 2px;
+}
+
+/* Individual suggestion row */
+.wl-ac-item {
+  padding: 6px 11px;
+  font-size: 12.5px;
+  color: var(--vscode-menu-foreground, var(--vscode-foreground));
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background var(--wl-transition), color var(--wl-transition);
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.05));
+}
+
+.wl-ac-item:last-child {
+  border-bottom: none;
+}
+
+.wl-ac-item:hover {
+  background: var(--vscode-menu-selectionBackground, rgba(255, 255, 255, 0.08));
+  color: var(--vscode-menu-selectionForeground, var(--vscode-foreground));
+}
+
+/* Keyboard-highlighted item */
+.wl-ac-item--active {
+  background: var(--wl-accent-dim) !important;
+  color: var(--wl-accent) !important;
+  font-weight: 600;
+}
+
+/* Light-theme overrides */
+body[data-wl-theme="light"] .wl-autocomplete-dropdown {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.12);
+}
+
+body[data-wl-theme="light"] .wl-ac-item {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  color: #1e1e1e;
+}
+
+body[data-wl-theme="light"] .wl-ac-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Enhanced mode badge (on user message sender row) ─── */
+.wl-enhanced-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: rgba(79, 142, 247, 0.15);
+  color: var(--wl-accent);
+  border: 1px solid rgba(79, 142, 247, 0.3);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* ── File Errors section (Enhanced mode AI response) ──── */
+.wl-file-errors-section {
+  border-left: 2px solid var(--wl-error);
+  padding-left: 8px;
+  margin-bottom: 2px;
+}
+
+.wl-file-errors-section .wl-section-header {
+  margin-bottom: 5px;
+}
+
+.wl-file-errors-section .wl-section-icon {
+  font-size: 12px;
+}
+
+.wl-file-errors-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0;
+  margin: 0;
+}
+
+.wl-file-error-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.wl-file-error-name {
+  font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Consolas', monospace);
+  font-size: 11px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background, rgba(0, 0, 0, 0.2));
+  padding: 0 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.wl-file-error-type {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--wl-radius-sm);
+  background: rgba(239, 83, 80, 0.14);
+  color: var(--wl-error);
+  border: 1px solid rgba(239, 83, 80, 0.3);
+  flex-shrink: 0;
+}
+
+.wl-file-error-desc {
+  font-size: 11.5px;
+  color: var(--vscode-descriptionForeground);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Search Modal Overlay ─────────────────────────────── */
+.wl-search-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  animation: wl-fadeIn 0.15s ease;
+}
+
+.wl-search-panel {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100vh - 80px);
+  background: var(--vscode-editor-background, #1e1e1e);
+  border: 1px solid var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: wl-modalIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes wl-modalIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* Input row */
+.wl-search-panel .wl-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 13px;
+  flex-shrink: 0;
+}
+
+.wl-search-input-icon {
+  color: var(--vscode-descriptionForeground);
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.wl-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--vscode-foreground);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1;
+  caret-color: var(--wl-accent);
+  min-width: 0;
+}
+
+.wl-search-input::placeholder {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.7;
+}
+
+/* Close button inside the input row */
+.wl-search-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  padding: 4px;
+  border-radius: var(--wl-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color var(--wl-transition), background var(--wl-transition);
+}
+
+.wl-search-close-btn:hover {
+  color: var(--vscode-foreground);
+  background: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.09));
+}
+
+/* Thin divider below input */
+.wl-search-divider {
+  height: 1px;
+  background: var(--vscode-editorWidget-border, rgba(255, 255, 255, 0.1));
+  flex-shrink: 0;
+}
+
+/* Scrollable results list */
+.wl-search-results {
+  overflow-y: auto;
+  padding: 6px 0 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.wl-search-results::-webkit-scrollbar {
+  width: 4px;
+}
+
+.wl-search-results::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 2px;
+}
+
+/* Individual result row */
+.wl-search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.wl-search-result-item:hover,
+.wl-search-result-item.active {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.06));
+}
+
+/* Chat bubble icon */
+.wl-search-result-icon {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.65;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Title */
+.wl-search-result-title {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--vscode-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Time label & return indicator */
+.wl-search-result-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.wl-search-result-time {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.wl-search-result-enter {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.wl-search-result-item:hover .wl-search-result-enter,
+.wl-search-result-item.active .wl-search-result-enter {
+  opacity: 0.7;
+}
+
+/* Empty state */
+.wl-search-empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.7;
+}
+
+/* ── Repeated Mistake Popup ────────────────────────────── */
+.wl-repeat-popup {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 9999;
+  background: #c0392b;
+  color: #fff;
+  border-radius: var(--wl-radius);
+  padding: 9px 36px 9px 12px;
+  box-shadow: 0 4px 16px rgba(192, 57, 43, 0.45);
+  animation: wl-popup-slide-in 0.25s ease;
+  overflow: hidden;
+}
+
+/* Header row: icon + title + count badge */
+.wl-repeat-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.wl-repeat-popup-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.wl-repeat-popup-title {
+  font-size: 12px;
+  font-weight: 700;
+  flex: 1;
+  letter-spacing: 0.01em;
+}
+
+.wl-repeat-popup-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+}
+
+.wl-repeat-popup-msg {
+  font-size: 12px;
+  line-height: 1.55;
+  opacity: 0.92;
+}
+
+.wl-repeat-popup-cat {
+  opacity: 0.75;
+  font-size: 11px;
+}
+
+.wl-repeat-popup-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--wl-radius-sm);
+  line-height: 1;
+  transition: color 0.1s, background 0.1s;
+}
+
+.wl-repeat-popup-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Countdown progress bar */
+.wl-repeat-popup-bar-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.wl-repeat-popup-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+  animation: wl-popup-countdown 10s linear forwards;
+  transform-origin: left;
+}
+
+/* Slide-in from top */
+@keyframes wl-popup-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Slide-out (added by JS before removal) */
+.wl-repeat-popup-out {
+  animation: wl-popup-slide-out 0.2s ease forwards;
+}
+
+@keyframes wl-popup-slide-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Countdown shrink */
+@keyframes wl-popup-countdown {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
+}
+
+/* ── Conversation Delete & Danger Styles ── */
+.wl-history-delete,
+.wl-search-result-delete {
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.35;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.wl-history-item:hover .wl-history-delete,
+.wl-search-result-item:hover .wl-search-result-delete {
+  opacity: 0.75;
+}
+
+.wl-history-delete:hover,
+.wl-search-result-delete:hover {
+  opacity: 1 !important;
+  color: #ff5c5c !important;
+  background: rgba(255, 92, 92, 0.15) !important;
+}
+
+.wl-danger-hover:hover {
+  color: #ff5c5c !important;
+}
+
+.wl-danger-item {
+  color: var(--vscode-foreground);
+}
+
+.wl-danger-item:hover {
+  color: #ff5c5c !important;
+  background: rgba(255, 92, 92, 0.12) !important;
+}
+
+/* ── Floating Voice Status Banner ── */
+.wl-voice-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  background: rgba(30, 35, 48, 0.95);
+  border: 1px solid rgba(79, 142, 247, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: var(--vscode-foreground);
+  backdrop-filter: blur(8px);
+  animation: wl-fade-in 0.2s ease-out;
+}
+
+.wl-voice-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4d4f;
+  animation: wl-voice-pulse 1.2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+#wl-voice-status-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-voice-status-close {
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+.wl-voice-status-close:hover {
+  opacity: 1;
+  color: var(--vscode-foreground);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   AGENT CHATPLACE & DOCUMENT GENERATOR AGENT STYLES
+   ───────────────────────────────────────────────────────────── */
+
+.wl-tab-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.16);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  margin-left: 6px;
+  letter-spacing: 0.04em;
+}
+
+#wl-panel-agents {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 84px);
+  overflow: hidden;
+  position: relative;
+  background: var(--vscode-sideBar-background);
+}
+
+#wl-panel-agents.wl-hidden {
+  display: none !important;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   VIEW 1: AGENT DIRECTORY / HUB CARDS
+   ═════════════════════════════════════════════════════════════ */
+.wl-agents-hub {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px;
+  gap: 14px;
+}
+
+.wl-hub-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.06));
+}
+
+.wl-hub-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wl-hub-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.wl-hub-badge {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  white-space: nowrap;
+}
+
+.wl-hub-subtitle {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.wl-agent-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Individual Agent Card ── */
+.wl-agent-card {
+  padding: 13px;
+  border-radius: 10px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.wl-agent-card-active {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.wl-agent-card-active:hover {
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.wl-agent-card-upcoming {
+  opacity: 0.78;
+  border-style: dashed;
+}
+
+.wl-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.wl-card-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wl-icon-doc-gen {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.25));
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.wl-icon-test-gen {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(217, 70, 239, 0.2));
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+}
+
+.wl-icon-sec-gen {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.wl-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.wl-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.wl-card-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-pill-upcoming {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  white-space: nowrap;
+}
+
+.wl-card-desc {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin: 3px 0 0 0;
+  line-height: 1.4;
+}
+
+.wl-card-deliverables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.wl-card-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--vscode-badge-background, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.07));
+  color: var(--vscode-foreground);
+}
+
+.wl-tag-pill {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--vscode-descriptionForeground);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wl-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.wl-open-agent-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   VIEW 2: AGENT CHATPLACE
+   ═════════════════════════════════════════════════════════════ */
+.wl-agent-chatplace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Top Nav Bar inside Chatplace ── */
+.wl-agent-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+}
+
+.wl-agent-back-btn {
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  font-size: 11.5px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.wl-agent-back-btn:hover {
+  color: var(--vscode-foreground);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wl-agent-active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+/* ── Compact Agent Hero Header ── */
+.wl-agent-hero {
+  padding: 10px 14px;
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.wl-agent-profile {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.wl-agent-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.25));
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wl-agent-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.wl-agent-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-agent-desc {
+  font-size: 10.5px;
+  color: var(--vscode-descriptionForeground);
+  margin: 1px 0 0 0;
+  line-height: 1.35;
+}
+
+/* ── Deliverables Badge Row ── */
+.wl-agent-deliverables {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.wl-deliverable-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--vscode-badge-background, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.06));
+  font-size: 10.5px;
+  flex: 1;
+}
+
+.wl-badge-icon {
+  color: var(--vscode-descriptionForeground);
+  flex-shrink: 0;
+}
+
+.wl-badge-ext {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.wl-ext-md {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+}
+
+.wl-ext-mmd {
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+}
+
+.wl-ext-pdf {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+}
+
+.wl-ext-py {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+}
+
+.wl-ext-jest {
+  background: rgba(234, 179, 8, 0.18);
+  color: #facc15;
+}
+
+.wl-ext-junit {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+}
+
+.wl-ext-karma {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.wl-test-avatar {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(217, 70, 239, 0.25)) !important;
+  border-color: rgba(168, 85, 247, 0.45) !important;
+  color: #c084fc !important;
+}
+
+.wl-run-tests-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.wl-run-tests-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  transform: translateY(-1px);
+}
+
+.wl-cases-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  margin-left: 6px;
+}
+
+
+.wl-badge-label {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Action Chips ── */
+.wl-agent-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wl-agent-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--vscode-button-border, rgba(255, 255, 255, 0.1));
+  background: var(--vscode-button-secondaryBackground, rgba(255, 255, 255, 0.04));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease-out;
+}
+
+.wl-agent-chip:hover {
+  background: var(--vscode-button-secondaryHoverBackground, rgba(255, 255, 255, 0.09));
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+#wl-agent-chip-full {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  font-weight: 600;
+}
+
+.wl-chip-icon {
+  flex-shrink: 0;
+  color: #60a5fa;
+}
+
+/* ── Agent Activity Stream ── */
+.wl-agent-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.wl-agent-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: wl-fade-in 0.2s ease-out;
+}
+
+.wl-agent-msg-bot {
+  align-self: stretch;
+}
+
+.wl-agent-msg-user {
+  align-self: flex-end;
+  max-width: 90%;
+}
+
+.wl-agent-msg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.wl-agent-msg-author {
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.wl-agent-msg-user .wl-agent-msg-author {
+  color: var(--vscode-descriptionForeground);
+}
+
+.wl-agent-msg-time {
+  color: var(--vscode-descriptionForeground);
+  font-size: 10px;
+}
+
+.wl-agent-msg-body {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  color: var(--vscode-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.wl-agent-msg-user .wl-agent-msg-body {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-radius: 8px 8px 2px 8px;
+  border: none;
+}
+
+.wl-agent-feature-list {
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.wl-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.wl-feature-icon-wrap {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.wl-agent-prompt-hint {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 8px;
+}
+
+/* ── Live Step Tracker Card ── */
+.wl-agent-step-card {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--vscode-editor-background);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.wl-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.wl-step-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.wl-step-count {
+  font-size: 10.5px;
+  color: var(--vscode-descriptionForeground);
+  font-weight: 500;
+}
+
+.wl-step-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wl-step-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+.wl-step-message {
+  font-size: 11.5px;
+  color: var(--vscode-foreground);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wl-step-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: wl-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Result Deliverables Card ── */
+.wl-result-card {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--vscode-editor-background);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wl-result-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.wl-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  gap: 8px;
+}
+
+.wl-file-info {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wl-file-name {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--vscode-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wl-file-open-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s;
+}
+
+.wl-file-open-btn:hover {
+  opacity: 0.9;
+}
+
+.wl-preview-accordion {
+  border-top: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-preview-toggle-btn {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-align: left;
+}
+
+.wl-preview-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.wl-code-preview {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--vscode-sideBar-background);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 10.5px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.06));
+}
+
+/* ═════════════════════════════════════════════════════════════
+   PROFESSIONAL AGENT INPUT BAR (CAPSULE IDENTICAL TO CHAT)
+   ═════════════════════════════════════════════════════════════ */
+.wl-agent-input-bar {
+  padding: 10px 14px 16px 14px;
+  background: var(--vscode-editor-background);
+  border-top: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-agent-input-bar .wl-input-capsule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--vscode-input-background, #1e1e1e);
+  border: 1px solid var(--vscode-input-border, rgba(255, 255, 255, 0.15));
+  border-radius: 20px;
+  padding: 4px 6px 4px 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wl-agent-input-bar .wl-input-capsule:focus-within {
+  border-color: var(--vscode-focusBorder, #007fd4);
+  box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007fd4);
+}
+
+.wl-agent-textarea {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  color: var(--vscode-input-foreground);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  resize: none;
+  outline: none !important;
+  box-shadow: none !important;
+  max-height: 72px;
+  padding: 4px 0;
+}
+
+.wl-agent-input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 4px;
+}
+
+.wl-agent-scope-badge {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.85;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   TERMINAL COMMAND ORCHESTRATOR CARD & HUMAN-IN-THE-LOOP BUTTONS
+   ═════════════════════════════════════════════════════════════ */
+.wl-term-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 6px;
+}
+
+.wl-term-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wl-term-os-pill {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wl-term-risk-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wl-term-risk-low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.wl-term-risk-medium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.wl-term-risk-high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.wl-term-code-box {
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--vscode-editor-font-family, 'Cascadia Code', monospace);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.wl-term-prompt-char {
+  color: #38bdf8;
+  font-weight: 700;
+  user-select: none;
+}
+
+.wl-term-explanation {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--vscode-foreground);
+  opacity: 0.9;
+}
+
+.wl-term-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.wl-term-btn-accept {
+  flex: 1;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.wl-term-btn-accept:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.wl-term-btn-reject {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+
+.wl-term-btn-reject:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+.wl-term-btn-accept:disabled,
+.wl-term-btn-reject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wl-term-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.wl-term-status-accepted {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.wl-term-status-rejected {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* ── Infrastructure Launch Action Button ── */
+.wl-infra-launch-btn,
+.wl-test-run-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin-top: 10px !important;
+  padding: 8px 12px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
+.wl-infra-launch-btn:hover,
+.wl-test-run-btn:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+  border-color: rgba(56, 189, 248, 0.6) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
+}
+
+.wl-infra-launch-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.wl-infra-launch-btn svg,
+.wl-test-run-btn svg {
+  flex-shrink: 0;
+  color: #38bdf8 !important;
+}
+
+.wl-infra-launch-label {
+  color: #f0f9ff !important;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wl-infra-launch-cmd,
+.wl-infra-launch-btn code,
+.wl-test-run-btn code {
+  font-family: var(--vscode-editor-font-family, 'Fira Code', 'Cascadia Code', monospace) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  padding: 3px 8px !important;
+  border-radius: 5px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* ── Terminal Output Selection Badge ── */
+.wl-terminal-badge {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 1.5px 7px !important;
+  border-radius: 8px !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  margin-left: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
