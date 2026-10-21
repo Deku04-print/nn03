@@ -1,9 +1,8 @@
-
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 import uuid
 
-class NexusUserManager(BaseUserManager):
+class WorkLensUserManager(BaseUserManager):
     def create_user(self, email, name, password=None, batch='', sub_batch=''):
         if not email:
             raise ValueError('Email required')
@@ -21,7 +20,7 @@ class NexusUserManager(BaseUserManager):
         return user
 
 
-class NexusUser(AbstractBaseUser, PermissionsMixin):
+class WorkLensUser(AbstractBaseUser, PermissionsMixin):
     id        = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email     = models.EmailField(unique=True)
     name      = models.CharField(max_length=150)
@@ -33,29 +32,10 @@ class NexusUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD  = 'email'
     REQUIRED_FIELDS = ['name']
-    objects = NexusUserManager()
+    objects = WorkLensUserManager()
 
     class Meta:
-        db_table = 'nexus_users'
+        db_table = 'wl_users'
 
     def __str__(self):
         return f'{self.name} <{self.email}>'
-
-
-class DashboardLoginCode(models.Model):
-    """Short-lived, single-use code used to exchange an extension session for a dashboard JWT."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(NexusUser, on_delete=models.CASCADE, related_name='dashboard_login_codes')
-    code_hash = models.CharField(max_length=64, unique=True, db_index=True)
-    redirect_uri = models.URLField(max_length=1000)
-    next_path = models.CharField(max_length=300, default='/')
-    expires_at = models.DateTimeField(db_index=True)
-    used_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'nexus_dashboard_login_codes'
-
-    def __str__(self):
-        return f'Dashboard login code for {self.user_id}'
-

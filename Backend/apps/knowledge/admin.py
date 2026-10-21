@@ -1,5 +1,3 @@
-
-
 from django.contrib import admin
 from .models import ProblemDNA
 
@@ -11,4 +9,3 @@ class ProblemDNAAdmin(admin.ModelAdmin):
     search_fields = ('root_cause', 'code_pattern', 'category')
     readonly_fields = ('id', 'created_at', 'updated_at')
     ordering = ('-created_at',)
-

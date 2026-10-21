@@ -1,12 +1,11 @@
-
 from django.db import models
-from apps.nexus.models import NexusSession
+from apps.worklens.models import WorkLensSession
 import uuid
 
 
 class AgentInteraction(models.Model):
     id             = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session        = models.ForeignKey(NexusSession, on_delete=models.CASCADE, related_name='interactions')
+    session        = models.ForeignKey(WorkLensSession, on_delete=models.CASCADE, related_name='interactions')
     agent_name     = models.CharField(max_length=100)
     action         = models.CharField(max_length=50)
     input_summary  = models.TextField(blank=True)
@@ -16,5 +15,4 @@ class AgentInteraction(models.Model):
     created_at     = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'nexus_agent_interactions'
-
+        db_table = 'wl_agent_interactions'

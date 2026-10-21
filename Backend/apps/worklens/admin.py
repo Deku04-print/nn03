@@ -1,10 +1,9 @@
-
 from django.contrib import admin
-from .models import NexusSession, Problem, ProblemContext, Attempt, ProblemResolution
+from .models import WorkLensSession, Problem, ProblemContext, Attempt, ProblemResolution
 
 
-@admin.register(NexusSession)
-class NexusSessionAdmin(admin.ModelAdmin):
+@admin.register(WorkLensSession)
+class WorkLensSessionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'project', 'status', 'started_at')
     list_filter = ('status',)
     ordering = ('-started_at',)

@@ -1,20 +1,19 @@
-
 from django.db import models
-from apps.users.models import NexusUser
+from apps.users.models import WorkLensUser
 import uuid
 
 
-class NexusSession(models.Model):
+class WorkLensSession(models.Model):
     STATUS = [('active', 'Active'), ('closed', 'Closed')]
     id         = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user       = models.ForeignKey(NexusUser, on_delete=models.CASCADE, related_name='sessions')
+    user       = models.ForeignKey(WorkLensUser, on_delete=models.CASCADE, related_name='sessions')
     project    = models.CharField(max_length=255, blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at   = models.DateTimeField(null=True, blank=True)
     status     = models.CharField(max_length=20, choices=STATUS, default='active')
 
     class Meta:
-        db_table = 'nexus_sessions'
+        db_table = 'wl_sessions'
 
 
 class Problem(models.Model):
@@ -22,8 +21,8 @@ class Problem(models.Model):
     STATUS   = [('open','Open'),('attempted','Attempted'),('resolved','Resolved'),('failed','Failed')]
 
     id           = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session      = models.ForeignKey(NexusSession, on_delete=models.CASCADE, related_name='problems')
-    user         = models.ForeignKey(NexusUser, on_delete=models.CASCADE, related_name='problems')
+    session      = models.ForeignKey(WorkLensSession, on_delete=models.CASCADE, related_name='problems')
+    user         = models.ForeignKey(WorkLensUser, on_delete=models.CASCADE, related_name='problems')
     language     = models.CharField(max_length=50)
     framework    = models.CharField(max_length=100, blank=True, null=True)
     problem_type = models.CharField(max_length=80)
@@ -36,7 +35,7 @@ class Problem(models.Model):
     updated_at   = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'nexus_problems'
+        db_table = 'wl_problems'
 
 
 class ProblemContext(models.Model):
@@ -50,7 +49,7 @@ class ProblemContext(models.Model):
     diagnostics     = models.JSONField(default=list)
 
     class Meta:
-        db_table = 'nexus_problem_contexts'
+        db_table = 'wl_problem_contexts'
 
 
 class Attempt(models.Model):
@@ -64,7 +63,7 @@ class Attempt(models.Model):
     created_at     = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'nexus_attempts'
+        db_table = 'wl_attempts'
 
 
 class ProblemResolution(models.Model):
@@ -83,4 +82,4 @@ class ProblemResolution(models.Model):
     resolved_at         = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = 'nexus_resolutions'
+        db_table = 'wl_resolutions'

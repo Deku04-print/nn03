@@ -1,4 +1,3 @@
-
 from django.urls import path
 from .views import (
     ProblemDNAListCreateView,
@@ -15,4 +14,3 @@ urlpatterns = [
     path('<uuid:pk>/',   ProblemDNADetailView.as_view(),     name='problems-detail'),
     path('<uuid:pk>/attempts/', AttemptCreateView.as_view(), name='problems-attempts'),
 ]
-
