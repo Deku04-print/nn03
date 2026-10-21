@@ -1,4 +1,3 @@
-
 """
 Tests — Verification loop: diagnostic comparison → status update,
          ProblemResolution model, multi-round verify flows.
@@ -20,7 +19,7 @@ NO_THROTTLE = {
     ],
     'DEFAULT_THROTTLE_CLASSES': [],
     'DEFAULT_THROTTLE_RATES': {},
-    'EXCEPTION_HANDLER': 'config.exceptions.nexus_exception_handler',
+    'EXCEPTION_HANDLER': 'config.exceptions.worklens_exception_handler',
 }
 
 ORIGINAL_DIAGS = [{'message': 'IndexError: list index out of range', 'severity': 'error', 'line': 5}]
@@ -80,16 +79,16 @@ class VerifyResolvesTest(APITestCase):
         cache.clear()
         _make_authed_client(self.client, 'vtest@wl.io')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_empty_diagnostics_resolves(self, mock_cls):
         """Verify with no new diagnostics should mark problem resolved."""
         mock_cls.return_value.run.return_value = MOCK_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        r2 = self.client.post('/api/nexus/verify/', {
+        r2 = self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'problem_id':      problem_id,
             'session_id':      session_id,
@@ -99,21 +98,21 @@ class VerifyResolvesTest(APITestCase):
         self.assertEqual(r2.status_code, 200)
         self.assertEqual(r2.data['verify_status'], 'resolved')
 
-        from apps.nexus.models import Problem
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=problem_id)
         self.assertEqual(problem.status, 'resolved')
         self.assertEqual(problem.resolution.verification_status, 'resolved')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_same_diagnostics_fails(self, mock_cls):
         """Verify with identical diagnostics marks as failed."""
         mock_cls.return_value.run.return_value = MOCK_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        r2 = self.client.post('/api/nexus/verify/', {
+        r2 = self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'problem_id':      problem_id,
             'session_id':      session_id,
@@ -123,7 +122,7 @@ class VerifyResolvesTest(APITestCase):
         self.assertEqual(r2.status_code, 200)
         self.assertEqual(r2.data['verify_status'], 'failed')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_partial_diagnostics(self, mock_cls):
         """Verify with fewer diagnostics marks as partially_resolved."""
         mock_cls.return_value.run.return_value = MOCK_RESULT
@@ -131,14 +130,14 @@ class VerifyResolvesTest(APITestCase):
             {'message': 'IndexError: list index out of range', 'severity': 'error', 'line': 5},
             {'message': 'NameError: name x not defined', 'severity': 'error', 'line': 8},
         ]
-        r1 = self.client.post('/api/nexus/analyze/', {
+        r1 = self.client.post('/api/worklens/analyze/', {
             **ANALYZE_PAYLOAD, 'diagnostics': multiDiags
         }, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        r2 = self.client.post('/api/nexus/verify/', {
+        r2 = self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'diagnostics':     multiDiags,
             'problem_id':      problem_id,
@@ -149,53 +148,53 @@ class VerifyResolvesTest(APITestCase):
         self.assertEqual(r2.status_code, 200)
         self.assertEqual(r2.data['verify_status'], 'partially_resolved')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_resolved_sets_resolved_at(self, mock_cls):
         """When a problem resolves, resolution.resolved_at must be populated."""
         mock_cls.return_value.run.return_value = MOCK_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        self.client.post('/api/nexus/verify/', {
+        self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'problem_id':      problem_id,
             'session_id':      session_id,
             'new_diagnostics': [],
         }, format='json')
 
-        from apps.nexus.models import Problem
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=problem_id)
         self.assertIsNotNone(problem.resolution.resolved_at)
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_failed_does_not_set_resolved_at(self, mock_cls):
         """A failed verification must NOT set resolved_at."""
         mock_cls.return_value.run.return_value = MOCK_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        self.client.post('/api/nexus/verify/', {
+        self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'problem_id':      problem_id,
             'session_id':      session_id,
             'new_diagnostics': ORIGINAL_DIAGS,  # same — failed
         }, format='json')
 
-        from apps.nexus.models import Problem
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=problem_id)
         self.assertIsNone(problem.resolution.resolved_at)
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_response_has_required_keys(self, mock_cls):
         """Verify response must contain success, session_id, problem_id, verify_status."""
         mock_cls.return_value.run.return_value = MOCK_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        r2 = self.client.post('/api/nexus/verify/', {
+        r2 = self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'problem_id': r1.data['problem_id'],
             'session_id': r1.data['session_id'],
@@ -204,19 +203,19 @@ class VerifyResolvesTest(APITestCase):
         for key in ('success', 'session_id', 'problem_id', 'verify_status'):
             self.assertIn(key, r2.data, msg=f'Missing key: {key}')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_updates_dna_verification_status(self, mock_cls):
         """After a resolved verify, ProblemDNA.verification_status must update."""
         # Step 1: analyze to create problem + DNA
         mock_cls.return_value.run.return_value = MOCK_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         self.assertIn('problem_id', r1.data, msg='analyze must return problem_id')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
         # Step 2: verify with empty diagnostics → resolved
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        self.client.post('/api/nexus/verify/', {
+        self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'problem_id':      problem_id,
             'session_id':      session_id,
@@ -227,18 +226,19 @@ class VerifyResolvesTest(APITestCase):
         dna = ProblemDNA.objects.get(problem__id=problem_id)
         self.assertEqual(dna.verification_status, 'resolved')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_without_problem_id_still_returns_200(self, mock_cls):
         """Verify without a problem_id should still return 200 (no problem to update)."""
-        # Verify is authenticated because it creates or inspects user-owned case data.
+        # Clear any potentially malformed auth headers before calling AllowAny endpoint
+        self.client.credentials()
         mock_cls.return_value.run.return_value = VERIFY_RESULT
-        r = self.client.post('/api/nexus/verify/', {
+        r = self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,
             'new_diagnostics': [],
         }, format='json')
         self.assertEqual(r.status_code, 200)
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_missing_required_field_returns_400(self, mock_cls):
         """Verify payload with an invalid diagnostic severity must return 400 (ChoiceField)."""
         bad_payload = {
@@ -246,7 +246,7 @@ class VerifyResolvesTest(APITestCase):
             'diagnostics': [{'message': 'err', 'severity': 'INVALID_SEVERITY'}],
             'new_diagnostics': [],
         }
-        r = self.client.post('/api/nexus/verify/', bad_payload, format='json')
+        r = self.client.post('/api/worklens/verify/', bad_payload, format='json')
         self.assertEqual(r.status_code, 400)
         self.assertFalse(r.data['success'])
 
@@ -257,12 +257,12 @@ class ProblemResolutionModelTest(TestCase):
     _counter = iter(range(10000))  # unique email counter
 
     def _setup_problem(self):
-        from apps.nexus.models import NexusSession, Problem
-        from apps.users.models import NexusUser
+        from apps.worklens.models import WorkLensSession, Problem
+        from apps.users.models import WorkLensUser
         uid = next(self._counter)
-        user = NexusUser.objects.create_user(
+        user = WorkLensUser.objects.create_user(
             email=f'res_model_{uid}@wl.io', name='R', password='pass123!')
-        session = NexusSession.objects.create(user=user)
+        session = WorkLensSession.objects.create(user=user)
         return Problem.objects.create(
             session=session, user=user,
             language='python', problem_type='runtime_error',
@@ -272,7 +272,7 @@ class ProblemResolutionModelTest(TestCase):
 
     def test_resolution_created_on_verify(self):
         """ProblemResolution row is created after _handle_verification is called."""
-        from apps.nexus.models import ProblemResolution
+        from apps.worklens.models import ProblemResolution
         problem = self._setup_problem()
         ProblemResolution.objects.create(
             problem=problem,
@@ -282,14 +282,14 @@ class ProblemResolutionModelTest(TestCase):
 
     def test_resolution_default_status_is_pending(self):
         """Default verification_status for a new resolution is 'pending'."""
-        from apps.nexus.models import ProblemResolution
+        from apps.worklens.models import ProblemResolution
         problem = self._setup_problem()
         resolution = ProblemResolution.objects.create(problem=problem)
         self.assertEqual(resolution.verification_status, 'pending')
 
     def test_resolution_status_can_be_updated(self):
         """verification_status can be changed from pending to resolved."""
-        from apps.nexus.models import ProblemResolution
+        from apps.worklens.models import ProblemResolution
         problem = self._setup_problem()
         resolution = ProblemResolution.objects.create(problem=problem)
         resolution.verification_status = 'resolved'

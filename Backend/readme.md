@@ -1,15 +1,13 @@
-# NEXUS backend
+Run these command in terminal
 
-The backend is the Django REST API. For the complete local setup, follow the root [README](../README.md), which includes PostgreSQL, Ollama, dashboard, and extension steps.
+Step 1 : cd backend
 
-For a direct Windows setup, create/configure `Backend/.env` from `.env.example`, then run these commands from this folder (no PowerShell activation is required):
+Step 2 : set http_proxy=
+Step 3 : set https_proxy=
+Step 4 : set no_proxy=172.*;
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py createsuperuser
-.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8999
-```
-
-The default database is PostgreSQL and the default local Ollama endpoint is `http://127.0.0.1:11434`. pgvector is not required by the current keyword retrieval path; embeddings are disabled. The API routes are listed in `config/urls.py`; mentoring endpoints are under `/api/nexus/`. See [`../docs/DATABASE_SCHEMA.md`](../docs/DATABASE_SCHEMA.md) for the model diagram.
+Step 5 : python -m venv venv
+Step 6 : .\venv\Scripts\activate 
+Step 7 : pip install -r requirements.txt 
+Step 8 : python manage.py migrate
+Step 9 : python manage.py runserver

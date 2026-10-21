@@ -1,6 +1,5 @@
-
 """
-NEXUS Infrastructure & DevOps Generator Agent
+WorkLens Infrastructure & DevOps Generator Agent
 Analyzes repository architecture, services, databases, and .env files to synthesize
 production-grade Dockerfiles, docker-compose.yml, nginx.conf, and Kubernetes manifests.
 Calls Ollama LLM to synthesize bespoke configurations tailored to the user's prompt.
@@ -12,7 +11,7 @@ import json
 import logging
 from ai.llm.client import call_llm
 
-logger = logging.getLogger('nexus.ai.infra_generator')
+logger = logging.getLogger('worklens.ai.infra_generator')
 
 
 class InfraGeneratorAgent:
@@ -54,7 +53,7 @@ class InfraGeneratorAgent:
 
     def _call_llm_infra_gen(self, topology: dict, prompt: str) -> list:
         """Call Ollama LLM to synthesize only the infrastructure files requested."""
-        system_prompt = """You are the NEXUS Infrastructure & DevOps Generator Agent.
+        system_prompt = """You are the WorkLens Infrastructure & DevOps Generator Agent.
 Your SOLE purpose is to generate production-ready infrastructure and containerization manifests according to the developer's exact prompt.
 
 CRITICAL RULES:
@@ -84,7 +83,7 @@ CRITICAL RULES:
 
 Topology Context:
 - Has Frontend: {topology.get('hasFrontend')} ({topology.get('frontendType')}) in folder '{topology.get('frontendDir')}' on port {topology.get('frontendPort', 3000)}
-- Has Backend: {topology.get('hasBackend')} ({topology.get('backendType')}) in folder '{topology.get('backendDir')}' on port {topology.get('backendPort', 8999)}
+- Has Backend: {topology.get('hasBackend')} ({topology.get('backendType')}) in folder '{topology.get('backendDir')}' on port {topology.get('backendPort', 8000)}
 - Databases: {', '.join(topology.get('databases', [])) or 'None'}
 - Environment Keys: {', '.join(list(topology.get('envVariables', {}).keys())[:15])}
 
@@ -161,7 +160,7 @@ Generate only the requested configuration files in the specified JSON format now
         has_backend = topology.get('hasBackend', False)
         fe_dir = topology.get('frontendDir', 'Frontend')
         be_dir = topology.get('backendDir', 'Backend')
-        be_port = topology.get('backendPort', 8999)
+        be_port = topology.get('backendPort', 8000)
         fe_port = topology.get('frontendPort', 3000)
         databases = topology.get('databases', ['PostgreSQL'])
 
@@ -185,7 +184,7 @@ FROM nginx:alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
 RUN printf 'server {{\\n\\
     listen 80;\\n\\
-    server_name _;\\n\\
+    server_name localhost;\\n\\
     location / {{\\n\\
         root /usr/share/nginx/html;\\n\\
         index index.html index.htm;\\n\\
@@ -274,10 +273,10 @@ EXPOSE {be_port}
             if 'PostgreSQL' in databases:
                 compose_services.append("""  postgres:
     image: postgres:15-alpine
-    container_name: nexus_postgres
+    container_name: worklens_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-nexus}
+      POSTGRES_DB: ${DB_NAME:-worklens}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
     ports:
@@ -296,7 +295,7 @@ EXPOSE {be_port}
             if 'Redis' in databases:
                 compose_services.append("""  redis:
     image: redis:7-alpine
-    container_name: nexus_redis
+    container_name: worklens_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -311,7 +310,7 @@ EXPOSE {be_port}
     build:
       context: ./{be_dir}
       dockerfile: Dockerfile
-    container_name: nexus_backend
+    container_name: worklens_backend
     restart: unless-stopped
     env_file:
       - .env
@@ -332,7 +331,7 @@ EXPOSE {be_port}
     build:
       context: ./{fe_dir}
       dockerfile: Dockerfile
-    container_name: nexus_frontend
+    container_name: worklens_frontend
     restart: unless-stopped
     ports:
       - "80:80"
@@ -344,7 +343,7 @@ EXPOSE {be_port}
             frontend_dependency = "- frontend\n      " if has_frontend else ""
             compose_services.append(f"""  nginx:
     image: nginx:alpine
-    container_name: nexus_proxy
+    container_name: worklens_proxy
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -415,7 +414,7 @@ http {{
 
     server {{
         listen 80;
-        server_name _;
+        server_name localhost;
 
         client_max_body_size 50M;
 
@@ -458,39 +457,39 @@ http {{
             k8s_backend = f"""apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nexus-backend
+  name: worklens-backend
   labels:
-    app: nexus-backend
+    app: worklens-backend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: nexus-backend
+      app: worklens-backend
   template:
     metadata:
       labels:
-        app: nexus-backend
+        app: worklens-backend
     spec:
       containers:
       - name: backend
-        image: nexus-backend:latest
+        image: worklens-backend:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: {be_port}
         envFrom:
         - configMapRef:
-            name: nexus-config
+            name: worklens-config
         - secretRef:
-            name: nexus-secret
+            name: worklens-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nexus-backend-svc
+  name: worklens-backend-svc
 spec:
   type: ClusterIP
   selector:
-    app: nexus-backend
+    app: worklens-backend
   ports:
   - port: {be_port}
     targetPort: {be_port}
@@ -505,22 +504,22 @@ spec:
                 k8s_frontend = """apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nexus-frontend
+  name: worklens-frontend
   labels:
-    app: nexus-frontend
+    app: worklens-frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: nexus-frontend
+      app: worklens-frontend
   template:
     metadata:
       labels:
-        app: nexus-frontend
+        app: worklens-frontend
     spec:
       containers:
       - name: frontend
-        image: nexus-frontend:latest
+        image: worklens-frontend:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -528,11 +527,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nexus-frontend-svc
+  name: worklens-frontend-svc
 spec:
   type: ClusterIP
   selector:
-    app: nexus-frontend
+    app: worklens-frontend
   ports:
   - port: 80
     targetPort: 80
@@ -543,24 +542,24 @@ spec:
                     "category": "Kubernetes"
                 })
 
-            backend_or_frontend_svc = 'nexus-frontend-svc' if has_frontend else 'nexus-backend-svc'
+            backend_or_frontend_svc = 'worklens-frontend-svc' if has_frontend else 'worklens-backend-svc'
             ingress_port = 80 if has_frontend else be_port
             k8s_ingress = f"""apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nexus-ingress
+  name: worklens-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-  - host: nexus.local
+  - host: worklens.local
     http:
       paths:
       - path: /api
         pathType: Prefix
         backend:
           service:
-            name: nexus-backend-svc
+            name: worklens-backend-svc
             port:
               number: {be_port}
       - path: /
@@ -580,7 +579,7 @@ spec:
             k8s_config = f"""apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nexus-config
+  name: worklens-config
 data:
   ENVIRONMENT: "production"
   PORT: "{be_port}"
@@ -596,7 +595,7 @@ data:
             k8s_secret = """apiVersion: v1
 kind: Secret
 metadata:
-  name: nexus-secret
+  name: worklens-secret
 type: Opaque
 stringData:
   SECRET_KEY: "change-in-production-secret"
@@ -609,5 +608,3 @@ stringData:
             })
 
         return files
-
-

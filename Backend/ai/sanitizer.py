@@ -17,7 +17,7 @@ Patterns detected and replaced:
 import re
 import logging
 
-logger = logging.getLogger('nexus.sanitizer')
+logger = logging.getLogger('worklens.sanitizer')
 
 # ── Regex patterns ──────────────────────────────────────────────────
 _PATTERNS = [
@@ -103,7 +103,7 @@ def sanitize_diagnostics(diagnostics: list) -> list:
 
 def sanitize_payload(payload: dict) -> dict:
     """
-    Sanitize a NEXUS payload dict before it is sent to the AI pipeline.
+    Sanitize a WorkLens payload dict before it is sent to the AI pipeline.
     Walks: selection.text, surrounding_code, diagnostics, workspace.env.
     Returns a new dict — does not mutate the original.
     """
@@ -115,35 +115,11 @@ def sanitize_payload(payload: dict) -> dict:
         original = p['selection']['text']
         p['selection']['text'] = sanitize_text(original)
         if p['selection']['text'] != original:
-            logger.info('[NEXUS] Sanitized selected code (secret/PII detected)')
+            logger.info('[WorkLens] Sanitized selected code (secret/PII detected)')
 
     # Surrounding code
     if p.get('surrounding_code'):
         p['surrounding_code'] = sanitize_text(p['surrounding_code'])
-
-    if isinstance(p.get('user_message'), str):
-        p['user_message'] = sanitize_text(p['user_message'][:6000])
-
-    if isinstance(p.get('conversation_history'), list):
-        p['conversation_history'] = [
-            {'role': item['role'], 'content': sanitize_text(str(item.get('content', ''))[:6000])}
-            for item in p['conversation_history'][-10:]
-            if isinstance(item, dict) and item.get('role') in ('user', 'assistant')
-        ]
-
-    # Advanced Chat files are user-approved before collection. Sanitize and cap
-    # them again server-side; the client-side preview is not a trust boundary.
-    if isinstance(p.get('related_files'), list):
-        safe_files = []
-        for item in p['related_files'][:5]:
-            if not isinstance(item, dict):
-                continue
-            safe_files.append({
-                'path': sanitize_text(str(item.get('path', ''))[:1024]),
-                'language': sanitize_text(str(item.get('language', ''))[:80]),
-                'content': sanitize_text(str(item.get('content', ''))[:8000]),
-            })
-        p['related_files'] = safe_files
 
     # Diagnostic messages
     if p.get('diagnostics'):

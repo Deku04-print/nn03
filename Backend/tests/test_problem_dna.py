@@ -1,4 +1,3 @@
-
 """
 Tests — ProblemDNA creation, retrieval, attempt recording, embedding text,
         and the similar-problems knowledge endpoint.
@@ -20,7 +19,7 @@ NO_THROTTLE = {
     ],
     'DEFAULT_THROTTLE_CLASSES': [],
     'DEFAULT_THROTTLE_RATES': {},
-    'EXCEPTION_HANDLER': 'config.exceptions.nexus_exception_handler',
+    'EXCEPTION_HANDLER': 'config.exceptions.worklens_exception_handler',
 }
 
 ANALYZE_PAYLOAD = {
@@ -62,73 +61,73 @@ class ProblemDNACreateTest(APITestCase):
         r = self.client.post('/api/auth/login/', {'email': 'ptest@wl.io', 'password': 'pass123!'})
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {r.data.get("access", "")}')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_analyze_creates_problem_dna(self, mock_cls):
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.data['success'])
         self.assertIn('problem_id', resp.data)
         self.assertIsNotNone(resp.data['problem_id'])
 
         from apps.knowledge.models import ProblemDNA
-        from apps.nexus.models import Problem
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=resp.data['problem_id'])
         self.assertTrue(hasattr(problem, 'dna'))
         self.assertEqual(problem.dna.category, 'index_boundary')
         self.assertEqual(problem.dna.language, 'python')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_dna_symptoms_populated(self, mock_cls):
         """ProblemDNA symptoms should mirror the request diagnostics."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
-        from apps.nexus.models import Problem
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=resp.data['problem_id'])
         self.assertIn('IndexError: list index out of range', problem.dna.symptoms)
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_dna_guidance_populated(self, mock_cls):
         """ProblemDNA guidance field should contain the AI next_steps."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
-        from apps.nexus.models import Problem
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
+        from apps.worklens.models import Problem
         dna = Problem.objects.get(id=resp.data['problem_id']).dna
         self.assertTrue(len(dna.guidance) > 0)
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_dna_attempts_empty_on_create(self, mock_cls):
         """Freshly created ProblemDNA must have no recorded attempts."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
-        from apps.nexus.models import Problem
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
+        from apps.worklens.models import Problem
         dna = Problem.objects.get(id=resp.data['problem_id']).dna
         self.assertEqual(dna.attempts, [])
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_dna_error_type_matches_metadata(self, mock_cls):
         """ProblemDNA error_type must match the orchestrator's problem_type."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
-        from apps.nexus.models import Problem
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
+        from apps.worklens.models import Problem
         dna = Problem.objects.get(id=resp.data['problem_id']).dna
         self.assertEqual(dna.error_type, 'runtime_error')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_problem_status_open_on_create(self, mock_cls):
         """Newly created Problem must have status 'open'."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
-        from apps.nexus.models import Problem
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=resp.data['problem_id'])
         self.assertEqual(problem.status, 'open')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_problem_confidence_stored(self, mock_cls):
         """Problem confidence must match the orchestrator metadata value."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        resp = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
-        from apps.nexus.models import Problem
+        resp = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
+        from apps.worklens.models import Problem
         problem = Problem.objects.get(id=resp.data['problem_id'])
         self.assertAlmostEqual(problem.confidence, 0.94, places=2)
 
@@ -143,11 +142,11 @@ class AttemptRecordTest(APITestCase):
         r = self.client.post('/api/auth/login/', {'email': 'atest@wl.io', 'password': 'pass123!'})
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {r.data.get("access", "")}')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_hint_records_attempt(self, mock_cls):
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
 
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
@@ -156,7 +155,7 @@ class AttemptRecordTest(APITestCase):
                                                          'guidance_level': 2}}
         mock_cls.return_value.run.return_value = hint_result
 
-        r2 = self.client.post('/api/nexus/hint/', {
+        r2 = self.client.post('/api/worklens/hint/', {
             **ANALYZE_PAYLOAD,
             'problem_id': problem_id,
             'session_id': session_id,
@@ -169,11 +168,11 @@ class AttemptRecordTest(APITestCase):
         self.assertEqual(len(dna.attempts), 1)
         self.assertEqual(dna.attempts[0]['action'], 'hint')
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_multiple_hints_accumulate_attempts(self, mock_cls):
         """Each hint call should append a new entry to dna.attempts."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
@@ -183,7 +182,7 @@ class AttemptRecordTest(APITestCase):
         mock_cls.return_value.run.return_value = hint_result
 
         for _ in range(3):
-            self.client.post('/api/nexus/hint/', {
+            self.client.post('/api/worklens/hint/', {
                 **ANALYZE_PAYLOAD,
                 'problem_id': problem_id,
                 'session_id': session_id,
@@ -193,11 +192,11 @@ class AttemptRecordTest(APITestCase):
         dna = ProblemDNA.objects.get(problem__id=problem_id)
         self.assertEqual(len(dna.attempts), 3)
 
-    @patch('apps.nexus.views.NexusOrchestrator')
+    @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_guide_records_attempt_with_correct_action(self, mock_cls):
         """Guide action must be recorded as 'guide' in dna.attempts."""
         mock_cls.return_value.run.return_value = MOCK_ORCH_RESULT
-        r1 = self.client.post('/api/nexus/analyze/', ANALYZE_PAYLOAD, format='json')
+        r1 = self.client.post('/api/worklens/analyze/', ANALYZE_PAYLOAD, format='json')
         problem_id = r1.data['problem_id']
         session_id = r1.data['session_id']
 
@@ -206,7 +205,7 @@ class AttemptRecordTest(APITestCase):
                                                           'guidance_level': 1}}
         mock_cls.return_value.run.return_value = guide_result
 
-        self.client.post('/api/nexus/guide/', {
+        self.client.post('/api/worklens/guide/', {
             **ANALYZE_PAYLOAD,
             'problem_id': problem_id,
             'session_id': session_id,
@@ -227,12 +226,12 @@ class ProblemDNAModelTest(TestCase):
 
     def _make_dna(self, **kwargs):
         from apps.knowledge.models import ProblemDNA
-        from apps.nexus.models import NexusSession, Problem
-        from apps.users.models import NexusUser
+        from apps.worklens.models import WorkLensSession, Problem
+        from apps.users.models import WorkLensUser
         uid = next(self._counter)
-        user = NexusUser.objects.create_user(
+        user = WorkLensUser.objects.create_user(
             email=f'dna_model_{uid}@wl.io', name='M', password='pass123!')
-        session = NexusSession.objects.create(user=user)
+        session = WorkLensSession.objects.create(user=user)
         problem = Problem.objects.create(
             session=session, user=user,
             language='python', problem_type='runtime_error',
@@ -295,10 +294,6 @@ class ProblemDNAModelTest(TestCase):
 
 @override_settings(REST_FRAMEWORK=NO_THROTTLE)
 class SimilarProblemsTest(APITestCase):
-    def setUp(self):
-        user = User.objects.create_user(email='similar@test.local', name='Similar Test', password='pass12345')
-        self.client.force_authenticate(user=user)
-
     def test_similar_returns_list(self):
         """Similar endpoint returns a list even with no data."""
         resp = self.client.get('/api/problems/similar/?q=IndexError&language=python')
@@ -322,5 +317,3 @@ class SimilarProblemsTest(APITestCase):
         resp = self.client.get('/api/problems/similar/?q=SyntaxError')
         self.assertIn('success', resp.data)
         self.assertIn('data', resp.data)
-
-

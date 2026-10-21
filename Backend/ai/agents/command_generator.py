@@ -1,6 +1,5 @@
-
 """
-NEXUS Terminal Command Orchestrator Agent (Human-in-the-Loop)
+WorkLens Terminal Command Orchestrator Agent (Human-in-the-Loop)
 Synthesizes safe, platform-appropriate terminal commands from natural language developer prompts.
 Leverages Ollama LLM for intelligent contextual understanding and multi-step command chaining.
 """
@@ -11,7 +10,7 @@ import json
 import logging
 from ai.llm.client import call_llm
 
-logger = logging.getLogger('nexus.ai.command_generator')
+logger = logging.getLogger('worklens.ai.command_generator')
 
 
 class CommandGeneratorAgent:
@@ -45,7 +44,7 @@ class CommandGeneratorAgent:
         return self._heuristic_command_planner(prompt, os_name, shell)
 
     def _call_llm_command_planner(self, prompt: str, os_name: str, shell: str, workspace_summary: str) -> dict:
-        system_prompt = f"""You are the NEXUS Terminal Command Orchestrator Agent.
+        system_prompt = f"""You are the WorkLens Terminal Command Orchestrator Agent.
 Your SOLE purpose is to convert natural language developer directives into precise, safe, executable shell commands.
 Target Environment:
 - OS: {os_name}

@@ -1,5 +1,3 @@
-
-
 """
 Context Analyzer Agent — understands language, framework, code structure, and summarizes the problem.
 """
@@ -7,7 +5,7 @@ import logging
 import json
 from ai.llm.client import call_llm
 
-logger = logging.getLogger('nexus.ai.context')
+logger = logging.getLogger('worklens.ai.context')
 
 SYSTEM_PROMPT = """You are a code analysis assistant. Analyze the given code, diagnostics, and user message.
 Return ONLY a JSON object with these fields:

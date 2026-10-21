@@ -7,8 +7,8 @@ urlpatterns = [
     # Auth
     path('api/auth/', include('apps.users.urls')),
 
-    # NEXUS core mentor endpoints
-    path('api/nexus/', include('apps.nexus.urls')),
+    # WorkLens core mentor endpoints
+    path('api/worklens/', include('apps.worklens.urls')),
 
     # Problem tracking — full ProblemDNA CRUD via knowledge app
     path('api/problems/', include('apps.knowledge.urls')),
@@ -18,7 +18,4 @@ urlpatterns = [
 
     # Admin — User Management
     path('api/admin/', include('apps.users.admin_urls')),
-
-    # Human assistance, AI feedback/reviews, and Skill Quest
-    path('api/collaboration/', include('apps.collaboration.urls')),
 ]

@@ -1,5 +1,5 @@
 """
-NEXUS AI Orchestrator — LangGraph StateGraph-based pipeline.
+WorkLens AI Orchestrator — LangGraph StateGraph-based pipeline.
 
 Graph:
   analyze_context → classify_problem → retrieve_similar
@@ -14,12 +14,12 @@ import json
 import logging
 import operator
 
-logger = logging.getLogger('nexus.ai')
+logger = logging.getLogger('worklens.ai')
 
 
 # ── State schema ──────────────────────────────────────────────────────
 
-class NexusState(TypedDict):
+class WorkLensState(TypedDict):
     action:           str
     payload:          dict
     user_id:          str
@@ -45,7 +45,7 @@ class NexusState(TypedDict):
 
 # ── Conditional edge helpers ──────────────────────────────────────────
 
-def _route_after_classify(state: NexusState) -> str:
+def _route_after_classify(state: WorkLensState) -> str:
     """
     After classification:
       - Very low confidence → skip retrieval, go straight to specialist routing
@@ -59,13 +59,13 @@ def _route_after_classify(state: NexusState) -> str:
     return 'retrieve_similar'
 
 
-def _route_after_retrieve(state: NexusState) -> str:
+def _route_after_retrieve(state: WorkLensState) -> str:
     if state.get('error'):
         return 'validate_response'
     return 'route_specialist'
 
 
-def _route_after_specialist(state: NexusState) -> str:
+def _route_after_specialist(state: WorkLensState) -> str:
     if state.get('error'):
         return 'validate_response'
     return 'generate_guidance'
@@ -78,10 +78,10 @@ def _build_graph(orchestrator):
     try:
         from langgraph.graph import StateGraph, END  # langgraph >= 0.0.26
     except ImportError:
-        logger.warning('[NEXUS] langgraph not installed — falling back to sequential steps.')
+        logger.warning('[WorkLens] langgraph not installed — falling back to sequential steps.')
         return None
 
-    graph = StateGraph(NexusState)
+    graph = StateGraph(WorkLensState)
 
     # Register nodes (each is a bound method on the orchestrator)
     graph.add_node('analyze_context',    orchestrator._analyze_context)
@@ -137,9 +137,9 @@ def _build_graph(orchestrator):
 
 # ── Orchestrator ──────────────────────────────────────────────────────
 
-class NexusOrchestrator:
+class WorkLensOrchestrator:
     """
-    Orchestrates the NEXUS AI pipeline via a compiled LangGraph StateGraph.
+    Orchestrates the WorkLens AI pipeline via a compiled LangGraph StateGraph.
     Falls back to sequential step execution if langgraph is unavailable.
     """
 
@@ -159,14 +159,14 @@ class NexusOrchestrator:
         # Try to compile the LangGraph; fall back gracefully if unavailable
         self._graph = _build_graph(self)
         if self._graph:
-            logger.info('[NEXUS] LangGraph StateGraph compiled successfully.')
+            logger.info('[WorkLens] LangGraph StateGraph compiled successfully.')
         else:
-            logger.info('[NEXUS] Running in sequential fallback mode.')
+            logger.info('[WorkLens] Running in sequential fallback mode.')
 
     # ── Public entry point ────────────────────────────────────────────
 
     def run(self, action: str, payload: dict, user_id: str, session_id: str) -> dict:
-        initial_state: NexusState = {
+        initial_state: WorkLensState = {
             'action':           action,
             'payload':          payload,
             'user_id':          user_id,
@@ -194,7 +194,7 @@ class NexusOrchestrator:
             try:
                 final_state = self._graph.invoke(initial_state)
             except Exception as exc:
-                logger.exception(f'[NEXUS] LangGraph execution failed: {exc}')
+                logger.exception(f'[WorkLens] LangGraph execution failed: {exc}')
                 final_state = {**initial_state, 'error': str(exc)}
         else:
             final_state = self._run_sequential(initial_state)
@@ -219,7 +219,7 @@ class NexusOrchestrator:
             },
         }
 
-    def _run_sequential(self, state: NexusState) -> NexusState:
+    def _run_sequential(self, state: WorkLensState) -> WorkLensState:
         """Sequential fallback when LangGraph is not available."""
         steps = [
             self._analyze_context,
@@ -235,14 +235,14 @@ class NexusOrchestrator:
                 if state.get('error'):
                     break
             except Exception as exc:
-                logger.exception(f'[NEXUS] Step {step.__name__} failed: {exc}')
+                logger.exception(f'[WorkLens] Step {step.__name__} failed: {exc}')
                 state['error'] = str(exc)
                 break
         return state
 
     # ── Node implementations (pure state → state) ─────────────────────
 
-    def _analyze_context(self, state: NexusState) -> NexusState:
+    def _analyze_context(self, state: WorkLensState) -> WorkLensState:
         result = self.analyzer.analyze(state['payload'])
         state['language']        = result.get('language', state['language'])
         state['framework']       = result.get('framework')
@@ -258,7 +258,7 @@ class NexusOrchestrator:
         return state
 
     @staticmethod
-    def _infer_input_type(state: NexusState) -> str:
+    def _infer_input_type(state: WorkLensState) -> str:
         """Rule-based input_type fallback when the LLM doesn't return a valid value."""
         import re
         user_msg   = state.get('user_message', '').strip()
@@ -280,7 +280,7 @@ class NexusOrchestrator:
 
         return 'text'
 
-    def _classify_problem(self, state: NexusState) -> NexusState:
+    def _classify_problem(self, state: WorkLensState) -> WorkLensState:
         code = state['payload'].get('selection', {}).get('text', '').strip()
         if not code:
             code = state['payload'].get('surrounding_code', '').strip()
@@ -296,18 +296,17 @@ class NexusOrchestrator:
         state['confidence']   = result.get('confidence', 0.0)
         return state
 
-    def _retrieve_similar(self, state: NexusState) -> NexusState:
+    def _retrieve_similar(self, state: WorkLensState) -> WorkLensState:
         similar = self.retrieval.search(
             query    = state['problem_summary'],
             language = state['language'],
             category = state['category'],
             top_k    = 3,
-            user_id  = state['user_id'],
         )
         state['similar_problems'] = similar
         return state
 
-    def _route_specialist(self, state: NexusState) -> NexusState:
+    def _route_specialist(self, state: WorkLensState) -> WorkLensState:
         specialist = self.router.route(
             language   = state['language'],
             framework  = state['framework'],
@@ -317,7 +316,7 @@ class NexusOrchestrator:
         state['specialist'] = specialist
         return state
 
-    def _generate_guidance(self, state: NexusState) -> NexusState:
+    def _generate_guidance(self, state: WorkLensState) -> WorkLensState:
         user_msg = state.get('user_message', '')
         conv_history = state.get('conversation_history', [])
         input_type = state.get('input_type', 'text')
@@ -354,19 +353,16 @@ class NexusOrchestrator:
         state['guidance_level'] = response.get('guidance_level', state['guidance_level'])
         return state
 
-    def _validate_response(self, state: NexusState) -> NexusState:
+    def _validate_response(self, state: WorkLensState) -> WorkLensState:
         r = state.get('response') or {}
         # Ensure required fields exist
         for field in ['observation', 'question']:
             if field not in r:
                 r[field] = ''
         # Strip code blocks — enforce no-direct-solution rule
-        for field in ['observation', 'question', 'hint', 'message', 'insight']:
+        for field in ['observation', 'question', 'hint']:
             if field in r and isinstance(r[field], str):
                 r[field] = self._strip_code_blocks(r[field])
-        for field in ['next_steps', 'suggestions']:
-            if isinstance(r.get(field), list):
-                r[field] = [self._strip_code_blocks(item) if isinstance(item, str) else item for item in r[field]]
         state['response'] = r
         return state
 
