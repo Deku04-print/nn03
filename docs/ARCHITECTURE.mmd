@@ -1,0 +1,46 @@
+flowchart TD
+    %% Architecture Blueprint for Nexus
+    subgraph ClientLayer ["Client & Interface Layer"]
+        UI["React Web Dashboard<br/>(Vite + Tailwind/CSS)"]
+        EXT["VS Code WorkLens Extension<br/>(Sidebar Webview & Commands)"]
+    end
+
+    subgraph APILayer ["API & Orchestration Layer"]
+        GATEWAY["API Gateway / Router<br/>(Django REST / JWT Auth)"]
+        ORCH["WorkLens AI Orchestrator<br/>(StateGraph & Route Dispatcher)"]
+    end
+
+    subgraph AgentsLayer ["Specialist AI Agents"]
+        DOC["Document Generator Agent<br/>(.md / .pdf / .mmd)"]
+        MENTOR["Mentor Agent<br/>(Progressive Hint Guidance)"]
+        CLASSIFIER["Problem Classifier<br/>(Problem DNA Signatures)"]
+    end
+
+    subgraph DataLayer ["Persistence & Knowledge"]
+        DB[("Relational Database<br/>Sessions, Users & Problems")]
+        DNA[("Problem DNA Registry<br/>Clustered Patterns")]
+        SECRETS["VS Code SecretStorage<br/>Secure Tokens"]
+    end
+
+    %% Flow Connections
+    EXT -->|"Captured Context & AST"| GATEWAY
+    UI -->|"Analytics & User Management"| GATEWAY
+    EXT -.->|"Local Auth Token"| SECRETS
+
+    GATEWAY -->|"Authenticated Request"| ORCH
+    ORCH --> MENTOR
+    ORCH --> CLASSIFIER
+    ORCH --> DOC
+
+    DOC -->|"Writes Output Files"| EXT
+    CLASSIFIER -->|"Indexes Telemetry"| DNA
+    GATEWAY -->|"CRUD Operations"| DB
+    MENTOR -->|"Telemetry Logs"| DB
+
+    classDef primary fill:#eff6ff,stroke:#2563eb,stroke-width:2px,color:#1e3a8a;
+    classDef secondary fill:#f8fafc,stroke:#64748b,stroke-width:1px,color:#0f172a;
+    classDef highlight fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
+
+    class UI,EXT primary;
+    class GATEWAY,ORCH secondary;
+    class DOC,MENTOR,CLASSIFIER highlight;

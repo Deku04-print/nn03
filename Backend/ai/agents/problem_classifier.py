@@ -1,13 +1,12 @@
-
 """
-Problem Classifier — classifies into one of 16 NEXUS problem categories.
+Problem Classifier — classifies into one of 16 WorkLens problem categories.
 Tries LLM classification first; falls back to rule-based when unavailable.
 """
 import json
 import logging
 from ai.llm.client import call_llm
 
-logger = logging.getLogger('nexus.ai.classifier')
+logger = logging.getLogger('worklens.ai.classifier')
 
 CATEGORIES = [
     'syntax_error', 'runtime_error', 'logic_error', 'type_error',
@@ -40,7 +39,7 @@ Diagnostics: {diag_text or 'None'}"""
             if result.get('problem_type') and result.get('category'):
                 return result
         except Exception as exc:
-            logger.warning(f'[NEXUS] Classifier LLM call failed: {exc}')
+            logger.warning(f'[WorkLens] Classifier LLM call failed: {exc}')
 
         # Graceful fallback — rule-based when LLM unavailable or returns garbage
         return self._fallback(diagnostics=diagnostics, language=language)
@@ -77,4 +76,3 @@ Diagnostics: {diag_text or 'None'}"""
             return json.loads(raw[start:end])
         except Exception:
             return {}
-

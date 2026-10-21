@@ -1,1 +1,45 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Django
+db.sqlite3
+media/
+
+# Logs
+*.log
+
+# Test & coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build files
+build/
+dist/
+*.egg-info/
+
+# Docker
+docker-compose.override.yml
+
+# Misc
+*.swp

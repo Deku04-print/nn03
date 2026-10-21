@@ -1,6 +1,5 @@
-
 """
-NEXUS Test Suite Generator Agent
+WorkLens Test Suite Generator Agent
 Analyzes source code, components, and modules to synthesize production-ready unit test suites.
 Supports:
 1. PyTest / unittest (Python, Django REST Framework, FastAPI, Flask)
@@ -15,7 +14,7 @@ import json
 import logging
 from ai.llm.client import call_llm
 
-logger = logging.getLogger('nexus.ai.test_generator')
+logger = logging.getLogger('worklens.ai.test_generator')
 
 
 class TestSuiteGeneratorAgent:
@@ -195,7 +194,7 @@ class TestSuiteGeneratorAgent:
 
     def _call_llm_test_gen(self, file_path: str, file_content: str, framework: str, prompt: str) -> str:
         """Prompt Ollama LLM to synthesize professional unit tests without conversational fluff."""
-        system_prompt = f"""You are the NEXUS Test Suite Generator Agent.
+        system_prompt = f"""You are the WorkLens Test Suite Generator Agent.
 Your SOLE purpose is to write rigorous, production-grade unit tests for the provided source code.
 CRITICAL RULES:
 1. Output ONLY runnable, valid test code matching the requested framework: '{framework}'.
@@ -258,7 +257,7 @@ Generate the complete test file now."""
         tests = []
         if has_django:
             header = f"""# Test suite for {module_name}
-# Generated automatically by NEXUS Test Suite Generator Agent
+# Generated automatically by WorkLens Test Suite Generator Agent
 import pytest
 from unittest.mock import MagicMock, patch
 from rest_framework import status
@@ -281,7 +280,7 @@ def mock_payload():
 """
         else:
             header = f"""# Test suite for {module_name}
-# Generated automatically by NEXUS Test Suite Generator Agent
+# Generated automatically by WorkLens Test Suite Generator Agent
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -364,7 +363,7 @@ def test_{module_name}_operations_edge_cases():
 
         if is_react:
             return f"""// Test suite for {comp_name}
-// Generated automatically by NEXUS Test Suite Generator Agent
+// Generated automatically by WorkLens Test Suite Generator Agent
 {import_stmt}
 import React from 'react';
 import {{ render, screen, fireEvent, waitFor }} from '@testing-library/react';
@@ -405,7 +404,7 @@ describe('{comp_name} Component', () => {{
 """
         else:
             return f"""// Test suite for {comp_name}
-// Generated automatically by NEXUS Test Suite Generator Agent
+// Generated automatically by WorkLens Test Suite Generator Agent
 {import_stmt}
 
 describe('{comp_name} Module', () => {{
@@ -441,7 +440,7 @@ describe('{comp_name} Module', () => {{
     def _synthesize_junit(self, class_name: str, content: str, file_path: str) -> str:
         """Synthesize JUnit 5 test suite."""
         return f"""// Test suite for {class_name}
-// Generated automatically by NEXUS Test Suite Generator Agent
+// Generated automatically by WorkLens Test Suite Generator Agent
 package tests;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -491,7 +490,7 @@ public class {class_name}Test {{
     def _synthesize_karma(self, module_name: str, content: str, file_path: str) -> str:
         """Synthesize Karma / Jasmine spec."""
         return f"""// Karma / Jasmine Test Spec for {module_name}
-// Generated automatically by NEXUS Test Suite Generator Agent
+// Generated automatically by WorkLens Test Suite Generator Agent
 
 describe('{module_name}', () => {{
     let mockService;

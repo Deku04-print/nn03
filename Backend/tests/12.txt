@@ -1,2 +1,1 @@
-
-python manage.py createsuperuser
+python manage.py shell -c "from apps.users.models import WorkLensUser; WorkLensUser.objects.create_user(email='3228250@tcs.com', name='3228250', password='Tcs#1234'); print('User created.')"

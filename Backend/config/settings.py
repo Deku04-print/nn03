@@ -1,5 +1,5 @@
 """
-NEXUS Django Settings
+WorkLens Django Settings
 """
 import os
 from pathlib import Path
@@ -11,11 +11,9 @@ import dotenv
 dotenv.load_dotenv(BASE_DIR / '.env')
 
 # ── Core ─────────────────────────────────────────────────────────
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-only-change-me-before-deployment')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG      = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
-    'ALLOWED_HOSTS', 'localhost,127.0.0.1'
-).split(',') if host.strip()]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # ── Apps ─────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -29,14 +27,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    # NEXUS apps
+    # WorkLens apps
     'apps.users',
-    'apps.nexus',
+    'apps.worklens',
     'apps.problems',
     'apps.knowledge',
     'apps.agents',
     'apps.analytics',
-    'apps.collaboration',
 ]
 
 MIDDLEWARE = [
@@ -69,7 +66,7 @@ TEMPLATES = [{
 
 # ── Database ─────────────────────────────────────────────────────
 import dj_database_url  # noqa – installed with psycopg2-binary
-_DB_URL = os.environ.get('DATABASE_URL', 'sqlite:///./nexus_dev.db')
+_DB_URL = os.environ.get('DATABASE_URL', 'sqlite:///./worklens_dev.db')
 
 # Gracefully fall back to SQLite for dev if psycopg2 / postgres is not available
 try:
@@ -78,12 +75,12 @@ except Exception:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'nexus_dev.db',
+            'NAME': BASE_DIR / 'worklens_dev.db',
         }
     }
 
 # ── Auth ─────────────────────────────────────────────────────────
-AUTH_USER_MODEL = 'users.NexusUser'
+AUTH_USER_MODEL = 'users.WorkLensUser'
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -106,7 +103,7 @@ REST_FRAMEWORK = {
         'anon': '100/hour',
         'user': '1000/hour',
     },
-    'EXCEPTION_HANDLER': 'config.exceptions.nexus_exception_handler',
+    'EXCEPTION_HANDLER': 'config.exceptions.worklens_exception_handler',
 }
 
 # ── JWT ───────────────────────────────────────────────────────────
@@ -119,11 +116,10 @@ SIMPLE_JWT = {
 }
 
 # ── CORS ─────────────────────────────────────────────────────────
-FRONTEND_ORIGIN = os.environ.get('FRONTEND_ORIGIN', 'http://localhost:3456').strip().rstrip('/')
-CORS_ALLOWED_ORIGINS = [origin.strip().rstrip('/') for origin in os.environ.get(
+CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    f'{FRONTEND_ORIGIN},http://127.0.0.1:3456'
-).split(',') if origin.strip()]
+    'http://localhost:3000,http://localhost:5173'
+).split(',')
 
 # ── Static / Media ────────────────────────────────────────────────
 STATIC_URL  = '/static/'
@@ -134,20 +130,10 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'UTC'
 USE_TZ        = True
 
-# ── AI / NEXUS settings ────────────────────────────────────────
-OLLAMA_BASE_URL  = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL     = os.environ.get('OLLAMA_MODEL', 'qwen3:4b')
-OLLAMA_TIMEOUT_SECONDS = int(os.environ.get('OLLAMA_TIMEOUT_SECONDS', '45'))
-OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '').strip()
-EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'embeddinggemma')
-EMBEDDING_TIMEOUT_SECONDS = int(os.environ.get('EMBEDDING_TIMEOUT_SECONDS', '15'))
-VISUAL_EXPERT_ENABLED = os.environ.get('VISUAL_EXPERT_ENABLED', 'True').lower() == 'true'
-# Reserved server-side integration settings. No repository ingestion runs until
-# the organization supplies and approves a host, repository and scoped credential.
-EXPERT_GIT_BASE_URL = os.environ.get('EXPERT_GIT_BASE_URL', '').strip()
-EXPERT_GIT_REPOSITORY = os.environ.get('EXPERT_GIT_REPOSITORY', '').strip()
-EXPERT_GIT_ACCESS_TOKEN = os.environ.get('EXPERT_GIT_ACCESS_TOKEN', '').strip()
- 
+# ── AI / WorkLens settings ────────────────────────────────────────
+OLLAMA_BASE_URL  = os.environ.get('OLLAMA_BASE_URL', 'http://172.20.203.113:5011')
+OLLAMA_MODEL     = os.environ.get('OLLAMA_MODEL', 'qwen3:8b')
+
 # ── Hybrid retrieval scoring weights (§28) ────────────────────────
 # Total should ideally sum to 1.0 but is not enforced — allows relative tuning.
 # Override each individually via environment variables.
@@ -157,9 +143,3 @@ RETRIEVAL_WEIGHTS = {
     'category':  float(os.environ.get('RW_CATEGORY',  '0.15')),  # same category bonus
     'verified':  float(os.environ.get('RW_VERIFIED',  '0.10')),  # verified-DNA bonus
 }
-
-# Human API lifecycle defaults; expiry is enforced on backend session operations.
-NEXUS_EXPERT_RESPONSE_MINUTES = int(os.environ.get('NEXUS_EXPERT_RESPONSE_MINUTES', '10'))
-NEXUS_SESSION_IDLE_MINUTES = int(os.environ.get('NEXUS_SESSION_IDLE_MINUTES', '30'))
-NEXUS_SKILL_QUEST_MIN_OCCURRENCES = int(os.environ.get('NEXUS_SKILL_QUEST_MIN_OCCURRENCES', '2'))
-DASHBOARD_LOGIN_CODE_TTL_SECONDS = max(15, min(120, int(os.environ.get('DASHBOARD_LOGIN_CODE_TTL_SECONDS', '45'))))

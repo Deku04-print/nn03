@@ -1,116 +1,208 @@
-"""Permission-scoped hybrid search over persisted ProblemDNA records.
-
-Ollama embeddings are stored as JSON vectors, so retrieval works without the
-PostgreSQL pgvector extension. Records without a current vector still receive
-keyword scoring until they are embedded.
 """
+Hybrid Semantic Search — keyword-based fallback (no external model required).
+
+sentence-transformers and FAISS have been removed.
+Search uses keyword overlap scoring instead of vector embeddings.
+
+Hybrid scoring:
+  score = w_keyword  * keyword_overlap(query, record_text)
+        + w_language * (1 if lang_match)
+        + w_category * (1 if cat_match)
+        + w_verified * (1 if verified)
+
+The public SemanticSearch interface (add / search) is unchanged.
+"""
+import os
 import logging
-import math
 import re
 
-logger = logging.getLogger('nexus.ai.retrieval')
+logger = logging.getLogger('worklens.ai.retrieval')
+
+FAISS_INDEX_PATH = os.environ.get('FAISS_INDEX_PATH', './data/faiss_index')
 
 
-def _tokenise(text):
-    return set(re.findall(r'\w+', str(text or '').lower()))
+# ── Keyword scoring ──────────────────────────────────────────────────
+
+def _tokenise(text: str) -> set:
+    """Lower-case word tokens from text."""
+    return set(re.findall(r'\w+', text.lower()))
 
 
-def _keyword_score(query, record_text):
-    query_tokens = _tokenise(query)
-    record_tokens = _tokenise(record_text)
-    if not query_tokens or not record_tokens:
+def _keyword_score(query: str, record_text: str) -> float:
+    """
+    Jaccard-like overlap score between query tokens and record tokens.
+    Returns a float in [0.0, 1.0].
+    """
+    q_tokens = _tokenise(query)
+    r_tokens = _tokenise(record_text)
+    if not q_tokens or not r_tokens:
         return 0.0
-    return len(query_tokens & record_tokens) / len(query_tokens | record_tokens)
+    return len(q_tokens & r_tokens) / len(q_tokens | r_tokens)
 
 
-def _cosine(left, right):
-    if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right) or not left:
-        return None
+def _record_text(record: dict) -> str:
+    """Combine searchable fields from a record dict into one string."""
+    return ' '.join(filter(None, [
+        record.get('symptoms', ''),
+        record.get('root_cause', ''),
+        record.get('guidance', ''),
+        record.get('category', ''),
+        record.get('language', ''),
+    ]))
+
+
+# ── Helpers ──────────────────────────────────────────────────────────
+
+def _using_postgres() -> bool:
+    """True when the default DB engine is PostgreSQL."""
     try:
-        dot = sum(float(a) * float(b) for a, b in zip(left, right))
-        norm_left = math.sqrt(sum(float(a) ** 2 for a in left))
-        norm_right = math.sqrt(sum(float(b) ** 2 for b in right))
-        if not norm_left or not norm_right:
-            return None
-        return max(0.0, min(1.0, dot / (norm_left * norm_right)))
-    except (TypeError, ValueError):
-        return None
+        from django.db import connection
+        return 'postgres' in connection.settings_dict.get('ENGINE', '')
+    except Exception:
+        return False
 
 
-def _weights():
+def _get_retrieval_weights() -> dict:
+    """Read hybrid scoring weights from Django settings with safe defaults."""
     try:
         from django.conf import settings
         return getattr(settings, 'RETRIEVAL_WEIGHTS', {
-            'semantic': .60, 'language': .15, 'category': .15, 'verified': .10,
+            'semantic': 0.60, 'language': 0.15,
+            'category': 0.15, 'verified': 0.10,
         })
     except Exception:
-        return {'semantic': .60, 'language': .15, 'category': .15, 'verified': .10}
+        return {'semantic': 0.60, 'language': 0.15, 'category': 0.15, 'verified': 0.10}
 
 
-def _record_text(dna):
-    symptoms = dna.symptoms if isinstance(dna.symptoms, list) else [dna.symptoms]
-    guidance = dna.guidance if isinstance(dna.guidance, list) else [dna.guidance]
-    return ' '.join(str(value) for value in [
-        *symptoms, dna.root_cause, *guidance, dna.category, dna.language,
-        dna.framework or '', dna.error_type,
-    ] if value)
+def _hybrid_score(
+    keyword_sim: float,
+    lang_match: bool,
+    cat_match: bool,
+    is_verified: bool,
+    weights: dict,
+) -> float:
+    """Compute the composite hybrid retrieval score."""
+    return (
+        weights['semantic'] * keyword_sim
+        + weights['language'] * (1.0 if lang_match else 0.0)
+        + weights['category'] * (1.0 if cat_match else 0.0)
+        + weights['verified'] * (1.0 if is_verified else 0.0)
+    )
 
+
+# ── pgvector backend (embedding skipped — keyword only) ──────────────
+
+def _pgvector_add(dna_instance, text: str):
+    """
+    Embeddings are disabled; this is a no-op.
+    Records are still stored in the database via Django ORM (no embedding column needed).
+    """
+    logger.debug('[WorkLens][pgvector] Embeddings disabled — skipping embedding store.')
+
+
+def _pgvector_search(query: str, language: str = '', category: str = '', top_k: int = 5) -> list:
+    """Keyword-based search across all ProblemDNA rows (no vector column needed)."""
+    try:
+        from apps.knowledge.models import ProblemDNA
+
+        weights = _get_retrieval_weights()
+        results = []
+
+        for dna in ProblemDNA.objects.all():
+            record_text = ' '.join(filter(None, [
+                dna.symptoms, dna.root_cause, str(getattr(dna, 'guidance', '')),
+                dna.category, dna.language,
+            ]))
+            keyword_sim = _keyword_score(query, record_text)
+            lang_match  = language.lower() == dna.language.lower() if language else False
+            cat_match   = category.lower() == dna.category.lower() if category else False
+            is_verified = dna.verification_status in ('verified', 'partially_resolved')
+
+            score = _hybrid_score(keyword_sim, lang_match, cat_match, is_verified, weights)
+            results.append({
+                'id':         str(dna.id),
+                'language':   dna.language,
+                'category':   dna.category,
+                'symptoms':   dna.symptoms,
+                'root_cause': dna.root_cause,
+                'guidance':   getattr(dna, 'guidance', ''),
+                'verified':   is_verified,
+                '_score':     score,
+            })
+
+        results.sort(key=lambda r: r['_score'], reverse=True)
+        return results[:top_k]
+
+    except Exception as exc:
+        logger.error(f'[WorkLens][pgvector] keyword search failed: {exc}')
+        return []
+
+
+# ── In-memory backend (replaces FAISS) ───────────────────────────────
+
+class _KeywordBackend:
+    """
+    In-memory record store with keyword-overlap search.
+    Replaces FAISS — no model download required.
+    """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._records = []
+        return cls._instance
+
+    def add(self, record: dict, text: str):
+        self._records.append(record)
+        logger.debug(f'[WorkLens][KeywordSearch] Added record. Total: {len(self._records)}')
+
+    def search(self, query: str, language: str = '', category: str = '', top_k: int = 5) -> list:
+        if not self._records:
+            return []
+
+        weights  = _get_retrieval_weights()
+        results  = []
+
+        for rec in self._records:
+            keyword_sim = _keyword_score(query, _record_text(rec))
+            lang_match  = language.lower() == rec.get('language', '').lower() if language else False
+            cat_match   = category.lower() == rec.get('category', '').lower() if category else False
+            is_verified = rec.get('verification_status') in ('verified', 'partially_resolved')
+
+            score = _hybrid_score(keyword_sim, lang_match, cat_match, is_verified, weights)
+            results.append({**rec, '_score': score, 'verified': is_verified})
+
+        results.sort(key=lambda r: r['_score'], reverse=True)
+        return results[:top_k]
+
+
+# ── unified public interface ─────────────────────────────────────────
 
 class SemanticSearch:
-    """Search verified organization knowledge and the caller's own private data."""
+    """
+    Auto-selects backend:
+      • PostgreSQL detected → pgvector path (keyword search, no embeddings)
+      • otherwise          → in-memory keyword search
 
-    def add(self, record, text=''):
-        """Compatibility adapter; persisted records are indexed by their model signal."""
-        instance = getattr(record, 'save', None)
-        if callable(instance):
-            record.save()
+    Usage:
+        ss = SemanticSearch()
+        ss.add(dna_instance, embedding_text)
+        results = ss.search("IndexError list index", language="python")
+    """
 
-    def search(self, query, language='', category='', top_k=5, user_id=None):
-        query = str(query or '').strip()[:6000]
-        if not query:
-            return []
-        try:
-            from django.conf import settings
-            from django.db.models import Q
-            from apps.knowledge.models import ProblemDNA
-            from ai.embeddings import EMBEDDING_MODEL, generate_embedding
+    def add(self, record, text: str):
+        if _using_postgres():
+            _pgvector_add(record, text)
+        else:
+            _KeywordBackend().add(
+                {'id': str(record.pk), 'language': record.language,
+                 'category': record.category, 'symptoms': record.symptoms,
+                 'root_cause': record.root_cause},
+                text
+            )
 
-            visible = Q(scope_zone='organization', verification_status='verified')
-            if user_id:
-                visible |= Q(scope_zone='private', problem__user_id=user_id)
-            records = ProblemDNA.objects.filter(visible).select_related('problem')
-
-            has_current_embeddings = records.filter(
-                embedding_model=EMBEDDING_MODEL, embedding__isnull=False,
-            ).exists()
-            query_vector = generate_embedding(query) if has_current_embeddings else None
-            weights = _weights()
-            results = []
-            for dna in records.iterator():
-                text = _record_text(dna)
-                keyword = _keyword_score(query, text)
-                semantic = None
-                if query_vector and dna.embedding_model == EMBEDDING_MODEL:
-                    semantic = _cosine(query_vector, dna.embedding)
-                content_score = keyword if semantic is None else (.9 * semantic + .1 * keyword)
-                language_match = bool(language and language.casefold() == dna.language.casefold())
-                category_match = bool(category and category.casefold() == dna.category.casefold())
-                verified = dna.verification_status == 'verified'
-                score = (
-                    weights.get('semantic', .60) * content_score
-                    + weights.get('language', .15) * language_match
-                    + weights.get('category', .15) * category_match
-                    + weights.get('verified', .10) * verified
-                )
-                results.append({
-                    'id': str(dna.id), 'language': dna.language,
-                    'category': dna.category, 'symptoms': dna.symptoms,
-                    'root_cause': dna.root_cause, 'guidance': dna.guidance,
-                    'verified': verified, 'match_type': 'semantic' if semantic is not None else 'keyword',
-                    '_score': round(score, 6),
-                })
-            results.sort(key=lambda item: (item['_score'], item['verified']), reverse=True)
-            return results[:min(20, max(1, int(top_k)))]
-        except Exception:
-            logger.exception('[NEXUS] ProblemDNA search failed; returning no matches.')
-            return []
+    def search(self, query: str, language: str = '', category: str = '', top_k: int = 5) -> list:
+        if _using_postgres():
+            return _pgvector_search(query, language, category, top_k)
+        return _KeywordBackend().search(query, language, category, top_k)

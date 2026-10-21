@@ -14,19 +14,16 @@ import urllib.request
 import urllib.error
 import logging
 import os
-import socket
 
-logger = logging.getLogger('nexus.ai.llm')
+logger = logging.getLogger('worklens.ai.llm')
 
-OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL    = os.environ.get('OLLAMA_MODEL', 'qwen3:4b')
-OLLAMA_TIMEOUT_SECONDS = int(os.environ.get('OLLAMA_TIMEOUT_SECONDS', '45'))
-OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '').strip()
+OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://172.20.203.113:5011')
+OLLAMA_MODEL    = os.environ.get('OLLAMA_MODEL', 'qwen3:8b')
 
 # ── Speed-optimised defaults ────────────────────────────────────────
 # Override any via env vars at startup
 _NUM_PREDICT  = int(os.environ.get('OLLAMA_NUM_PREDICT', '256')) # max output tokens
-_NUM_CTX      = int(os.environ.get('OLLAMA_NUM_CTX',     '1024')) # context window
+_NUM_CTX      = int(os.environ.get('OLLAMA_NUM_CTX',     '4096')) # context window
 _TEMPERATURE  = float(os.environ.get('OLLAMA_TEMPERATURE', '0.2'))
 
 
@@ -41,53 +38,7 @@ def _build_options(temperature: float = None, num_predict: int = None) -> dict:
     }
 
 
-def _ollama_http_error(exc: urllib.error.HTTPError) -> RuntimeError:
-    """Translate upstream failures to actionable messages without exposing internals."""
-    try:
-        detail = exc.read().decode('utf-8', errors='replace').strip()
-        try:
-            detail = json.loads(detail).get('error', detail)
-        except (json.JSONDecodeError, AttributeError):
-            pass
-    except Exception:
-        detail = ''
-    logger.warning('[NEXUS] Ollama returned HTTP %s: %s', exc.code, detail or exc.reason)
-    lowered = detail.lower()
-    if exc.code == 404 or 'model' in lowered and ('not found' in lowered or 'pull' in lowered):
-        return RuntimeError(
-            f'NEXUS: The configured Ollama model ({OLLAMA_MODEL}) is unavailable. '
-            'Install that model on the configured Ollama service or select an installed model.'
-        )
-    if exc.code in (401, 403):
-        return RuntimeError('NEXUS: The configured Ollama service rejected its credentials.')
-    if 'unable to allocate cpu buffer' in lowered or 'failed to allocate buffer' in lowered:
-        return RuntimeError(
-            f'NEXUS: Ollama could not fit model {OLLAMA_MODEL} in available memory. '
-            'Use a smaller installed model or free memory, then retry.'
-        )
-    if exc.code >= 500:
-        return RuntimeError('NEXUS: The configured Ollama service failed while generating a response. Try again later.')
-    return RuntimeError(f'NEXUS: The configured Ollama service rejected the request (HTTP {exc.code}).')
-
-
-def _request_headers() -> dict:
-    headers = {'Content-Type': 'application/json'}
-    if OLLAMA_API_KEY:
-        headers['Authorization'] = f'Bearer {OLLAMA_API_KEY}'
-    return headers
-
-
-def _ollama_connection_error(exc: urllib.error.URLError) -> RuntimeError:
-    reason = exc.reason
-    if isinstance(reason, (TimeoutError, socket.timeout)):
-        return RuntimeError('NEXUS: The configured Ollama service timed out. Check that it is running and retry.')
-    if isinstance(reason, ConnectionRefusedError):
-        return RuntimeError('NEXUS: The configured Ollama service refused the connection. Start it or check its configuration.')
-    logger.warning('[NEXUS] Ollama connection failed: %s', type(reason).__name__)
-    return RuntimeError('NEXUS: The configured Ollama service is unavailable. Check the service configuration and network access.')
-
-
-def call_llm(system: str, user: str, temperature: float = None, timeout: int = None) -> str:
+def call_llm(system: str, user: str, temperature: float = None, timeout: int = 45) -> str:
     """
     Call Ollama /api/chat — non-streaming, returns full response string.
     For progressive display, use call_llm_stream() instead.
@@ -105,27 +56,28 @@ def call_llm(system: str, user: str, temperature: float = None, timeout: int = N
     req = urllib.request.Request(
         f'{OLLAMA_BASE_URL}/api/chat',
         data=payload,
-        headers=_request_headers(),
+        headers={'Content-Type': 'application/json'},
         method='POST',
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout or OLLAMA_TIMEOUT_SECONDS) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             content = data['message']['content']
             logger.debug(
-                f'[NEXUS] LLM done | model={OLLAMA_MODEL} '
+                f'[WorkLens] LLM done | model={OLLAMA_MODEL} '
                 f'tokens={data.get("eval_count","?")} '
                 f'ms={data.get("eval_duration",0)//1_000_000}'
             )
             return content
-    except urllib.error.HTTPError as exc:
-        raise _ollama_http_error(exc) from exc
     except urllib.error.URLError as exc:
-        raise _ollama_connection_error(exc) from exc
+        raise RuntimeError(
+            f'WorkLens: Cannot reach Ollama at {OLLAMA_BASE_URL}. '
+            f'Make sure Ollama is running. Error: {exc}'
+        ) from exc
 
 
-def call_llm_conversation(messages: list, temperature: float = None, timeout: int = None) -> str:
+def call_llm_conversation(messages: list, temperature: float = None, timeout: int = 45) -> str:
     """
     Call Ollama /api/chat with a full multi-turn messages array.
     Each message should be {role: 'system'|'user'|'assistant', content: str}.
@@ -141,27 +93,28 @@ def call_llm_conversation(messages: list, temperature: float = None, timeout: in
     req = urllib.request.Request(
         f'{OLLAMA_BASE_URL}/api/chat',
         data=payload,
-        headers=_request_headers(),
+        headers={'Content-Type': 'application/json'},
         method='POST',
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout or OLLAMA_TIMEOUT_SECONDS) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             content = data['message']['content']
             logger.debug(
-                f'[NEXUS] LLM conversation done | model={OLLAMA_MODEL} '
+                f'[WorkLens] LLM conversation done | model={OLLAMA_MODEL} '
                 f'tokens={data.get("eval_count","?")} '
                 f'ms={data.get("eval_duration",0)//1_000_000}'
             )
             return content
-    except urllib.error.HTTPError as exc:
-        raise _ollama_http_error(exc) from exc
     except urllib.error.URLError as exc:
-        raise _ollama_connection_error(exc) from exc
+        raise RuntimeError(
+            f'WorkLens: Cannot reach Ollama at {OLLAMA_BASE_URL}. '
+            f'Make sure Ollama is running. Error: {exc}'
+        ) from exc
 
 
-def call_llm_stream(system: str, user: str, temperature: float = None, timeout: int = None):
+def call_llm_stream(system: str, user: str, temperature: float = None, timeout: int = 45):
     """
     Generator — yields text chunks as they arrive from Ollama.
     Use this for streaming responses to the VS Code sidebar for perceived speed.
@@ -183,12 +136,12 @@ def call_llm_stream(system: str, user: str, temperature: float = None, timeout: 
     req = urllib.request.Request(
         f'{OLLAMA_BASE_URL}/api/chat',
         data=payload,
-        headers=_request_headers(),
+        headers={'Content-Type': 'application/json'},
         method='POST',
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout or OLLAMA_TIMEOUT_SECONDS) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             for raw_line in resp:
                 line = raw_line.strip()
                 if not line:
@@ -202,7 +155,7 @@ def call_llm_stream(system: str, user: str, temperature: float = None, timeout: 
                         break
                 except json.JSONDecodeError:
                     continue
-    except urllib.error.HTTPError as exc:
-        raise _ollama_http_error(exc) from exc
     except urllib.error.URLError as exc:
-        raise _ollama_connection_error(exc) from exc
+        raise RuntimeError(
+            f'WorkLens: Cannot reach Ollama at {OLLAMA_BASE_URL}. Error: {exc}'
+        ) from exc
