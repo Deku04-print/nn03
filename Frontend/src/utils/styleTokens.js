@@ -1,3 +1,0 @@
-const hash = value => { let h = 2166136261; for (const c of String(value)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
-export function nexusStyleClass(property, value) { if (value == null || value === '') return ''; let normalized = value; if ((property === 'width' || property === 'height') && typeof value === 'string' && value.trim().endsWith('%')) normalized = Math.max(0, Math.min(100, Math.round(parseFloat(value)))) + '%'; return 'nxv-' + hash(property + ':' + String(normalized)); }
-export function paginationClass(active = false, arrow = false, disabled = false) { return ['nexus-page-button', active && 'is-active', arrow && 'is-arrow', disabled && 'is-disabled'].filter(Boolean).join(' '); }

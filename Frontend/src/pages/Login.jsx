@@ -48,7 +48,7 @@ export default function Login() {
         <div className="landing-header">
           <WorkLensLogo size={34} showText={true} color="#1a56db" textColor="#0f172a" />
           <span className="landing-pill">
-            <span   className={["nxs-1mdxtfc"].filter(Boolean).join(" ")}/>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb', display: 'inline-block' }} />
             Enterprise Edition
           </span>
         </div>
@@ -106,14 +106,14 @@ export default function Login() {
           <div className="landing-telemetry-preview">
             <div className="preview-top-bar">
               <div className="preview-title">
-                <span   className={["nxs-6d3eum"].filter(Boolean).join(" ")}/>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 0 2px rgba(16,185,129,0.3)' }} />
                 <span>Live Telemetry Stream</span>
               </div>
               <span className="preview-stat">AST Verified ✓</span>
             </div>
             <div className="preview-code-row">
-              <span  className={["nxs-anfsb3"].filter(Boolean).join(" ")}>TypeScript/JSX • Unused Declarations (B49)</span>
-              <span  className={["nxs-1kv4dl2"].filter(Boolean).join(" ")}>Resolved (1 hint)</span>
+              <span style={{ color: '#0f172a', fontWeight: 600 }}>TypeScript/JSX • Unused Declarations (B49)</span>
+              <span style={{ color: '#059669', fontWeight: 700 }}>Resolved (1 hint)</span>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ export default function Login() {
               <button id="login" className="btn-auth-submit" type="submit" disabled={busy}>
                 {busy ? (
                   <>
-                    <span className={["spinner", "nxs-abtey9"].filter(Boolean).join(" ")}  />
+                    <span className="spinner" style={{ width: 16, height: 16 }} />
                     <span>Verifying Credentials…</span>
                   </>
                 ) : (

@@ -1,5 +1,3 @@
-import { nexusStyleClass } from '../utils/styleTokens.js';
-
 export default function WorkLensLogo({
   size = 36,
   showText = true,
@@ -12,8 +10,15 @@ export default function WorkLensLogo({
 
   return (
     <div
-      className={[`nexus-brand-logo ${className}`, "nxs-85j96v", nexusStyleClass("flexDirection", isVertical ? 'column' : 'row'), nexusStyleClass("gap", isVertical ? 10 : 12)].filter(Boolean).join(" ")}
-      
+      className={`worklens-brand-logo ${className}`}
+      style={{
+        display: 'inline-flex',
+        flexDirection: isVertical ? 'column' : 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: isVertical ? 10 : 12,
+        userSelect: 'none',
+      }}
     >
       {/* Precision Lens + Code Emblem */}
       <svg
@@ -22,9 +27,9 @@ export default function WorkLensLogo({
         viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        
+        style={{ flexShrink: 0, color }}
         aria-hidden="true"
-       className={["nxs-bo3n4y", nexusStyleClass("color", color)].filter(Boolean).join(" ")}>
+      >
         {/* Outer Precision Lens Frame with smooth rounded corners */}
         <rect
           x="3"
@@ -80,9 +85,20 @@ export default function WorkLensLogo({
       {/* Typography Wordmark in Single Color */}
       {showText && (
         <span
-          
-         className={["nxs-142s9zd", nexusStyleClass("fontSize", isVertical ? Math.max(size * 0.52, 20) : Math.max(size * 0.58, 19)), nexusStyleClass("color", textColor)].filter(Boolean).join(" ")}>
-          <span>NEXUS</span>
+          style={{
+            fontFamily:
+              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
+            fontSize: isVertical ? Math.max(size * 0.52, 20) : Math.max(size * 0.58, 19),
+            fontWeight: 700,
+            letterSpacing: '-0.03em',
+            color: textColor,
+            lineHeight: 1,
+            display: 'inline-flex',
+            alignItems: 'baseline',
+          }}
+        >
+          <span>Work</span>
+          <span style={{ fontWeight: 500, opacity: 0.85, marginLeft: 1 }}>Lens</span>
         </span>
       )}
     </div>

@@ -1,6 +1,6 @@
 /**
- * NEXUS API service. An empty base uses Vite's /api proxy in development
- * and the same-origin Nginx reverse proxy in production.
+ * WorkLens API service — communicates with Django backend.
+ * Reads VITE_API_URL from env or falls back to '' (uses Vite proxy in dev).
  */
 const BASE = import.meta.env.VITE_API_URL || '';
 
@@ -26,15 +26,7 @@ async function request(path, opts = {}) {
     const res = await fetch(`${BASE}${path}`, { ...opts, headers });
     const data = await res.json().catch(() => ({}));
 
-    if (res.status === 401) {
-        clearToken();
-        // Keep rejected login credentials on the login screen so its error
-        // message can render instead of triggering a reload loop.
-        const isLoginRequest = path.startsWith('/api/auth/login/');
-        if (!isLoginRequest && window.location.pathname !== '/login') {
-            window.location.assign('/login');
-        }
-    }
+    if (res.status === 401) { clearToken(); window.location.href = '/login'; }
     if (!res.ok) {
         const err = new Error(data?.detail || data?.error?.message || `Error ${res.status}`);
         err.status = res.status;
@@ -88,3 +80,4 @@ export const api = {
             .then(r => r.json());
     },
 };
+

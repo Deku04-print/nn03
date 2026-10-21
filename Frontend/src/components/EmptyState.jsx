@@ -1,4 +1,3 @@
-
 /**
  * EmptyState – Professional fallback component with contextual SVG illustration.
  */
@@ -47,15 +46,27 @@ export default function EmptyState({ title, description, icon = 'data' }) {
     };
 
     return (
-        <div  className={["nxs-7eaj58"].filter(Boolean).join(" ")}>
-            <div  className={["nxs-nnc0r0"].filter(Boolean).join(" ")}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '64px 24px',
+            gap: 16,
+        }}>
+            <div style={{
+                padding: 20,
+                borderRadius: 20,
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+            }}>
                 {icons[icon] || icons.data}
             </div>
-            <div  className={["nxs-1txto41"].filter(Boolean).join(" ")}>
-                <div  className={["nxs-1jzioq9"].filter(Boolean).join(" ")}>
+            <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>
                     {title}
                 </div>
-                <div  className={["nxs-17nupjt"].filter(Boolean).join(" ")}>
+                <div style={{ fontSize: 13, color: '#94a3b8', maxWidth: 320, lineHeight: 1.6 }}>
                     {description}
                 </div>
             </div>

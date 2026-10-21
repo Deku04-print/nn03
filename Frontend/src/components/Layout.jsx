@@ -1,4 +1,3 @@
-
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
 import WorkLensLogo from './WorkLensLogo.jsx';
@@ -62,31 +61,6 @@ const NAV_SECTIONS = [
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                    </svg>
-                ),
-            },
-        ],
-    },
-    {
-        title: 'Expert Support',
-        items: [
-            {
-                to: '/human-api',
-                label: 'Human API',
-                icon: (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-5.5A7.5 7.5 0 1 1 20 11.5Z" />
-                        <path d="M8 11h.01M12 11h.01M16 11h.01" />
-                    </svg>
-                ),
-            },
-            {
-                to: '/visual-expert',
-                label: 'Visual Expert',
-                icon: (
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.2 2.2-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3.1v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-2.2-2.2.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H5v-3h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2.2-2.2.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V5h3.1v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.2 2.2-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2v3h-.2a1.7 1.7 0 0 0-1.5 1Z" />
                     </svg>
                 ),
             },
@@ -171,13 +145,13 @@ export default function Layout() {
                                 {user?.name || 'Admin'}
                             </div>
                             <div className="user-role-badge">
-                                {isAdminRole ? 'Administrator' : 'NEXUS User'}
+                                {isAdminRole ? 'Super Admin' : 'WorkLens User'}
                             </div>
                         </div>
                         <button
                             className="sign-out-btn"
                             onClick={logout}
-                            title="Sign out of NEXUS"
+                            title="Sign out of WorkLens"
                             aria-label="Sign out"
                         >
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
