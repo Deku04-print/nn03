@@ -10,7 +10,7 @@ const crypto = require('crypto');
  * @param {import('vscode').Webview} webview  Webview instance (for CSP source)
  * @returns {string}  Complete HTML document string
  */
-function getWebviewContent(cssUri, jsUri, webview, logo1Uri, nameTagUri) {
+function getWebviewContent(cssUri, jsUri, webview, logo1Uri, nameTagUri, assistanceUri) {
   const nonce = getNonce();
 
   return /* html */`<!DOCTYPE html>
@@ -87,6 +87,13 @@ function getWebviewContent(cssUri, jsUri, webview, logo1Uri, nameTagUri) {
       <span class="wl-brand-name">Work<span class="wl-brand-name-sub">Lens</span></span>
     </div>
     <div class="wl-header-actions" id="wl-header-actions">
+      <div class="wl-notification-wrap">
+        <button class="wl-icon-btn" id="wl-notification-bell" title="Notifications" aria-label="Notifications" aria-expanded="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+          <span id="wl-notification-badge" class="wl-notification-badge wl-hidden"></span>
+        </button>
+        <div id="wl-notification-menu" class="wl-notification-menu wl-hidden" aria-label="Your notifications">Loading notifications…</div>
+      </div>
       <button class="wl-icon-btn" id="wl-search-btn" title="Search conversations" aria-label="Search chat history">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
@@ -1071,6 +1078,7 @@ function getWebviewContent(cssUri, jsUri, webview, logo1Uri, nameTagUri) {
     <div class="wl-search-empty wl-hidden" id="wl-search-empty">No conversations found.</div>
   </div>
 
+  <script nonce="${nonce}" src="${assistanceUri}"></script>
   <script nonce="${nonce}" src="${jsUri}"></script>
 </body>
 </html>`;

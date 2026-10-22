@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { getErrorMessage } from '../utils/errors';
+import { getErrorMessage } from '../utils/error.js';
 import { api } from '../services/api';
 import * as XLSX from 'xlsx';
 import PageHeader from '../components/PageHeader.jsx';
 import Pagination from '../components/Pagination.jsx';
+import ExpertSettings from '../components/ExpertSettings.jsx';
 
 const UM_PAGE_SIZE = 20;
 
@@ -258,6 +259,7 @@ function EditUserModal({ user, onClose, onSaved }) {
                             <button type="button" className="btn btn-outline btn-sm" onClick={onClose}>Cancel</button>
                         </div>
                     </form>
+                    <ExpertSettings userId={user.id} />
                 </div>
             </div>
         </div>
@@ -880,4 +882,4 @@ export default function UserManagement() {
             )}
         </div>
     );
-} 
+}

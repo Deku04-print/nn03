@@ -22,6 +22,8 @@ class WorklensApi {
         this._sessionId = null;
         this._problemId = null;
         this._guidanceLevel = 0;
+        this._epoch = 0;
+        this.authVersion = 0;
     }
 
     get baseUrl() {
@@ -78,11 +80,15 @@ class WorklensApi {
         if (!res.access) throw new Error(res.detail || 'Login failed — check your credentials.');
 
         await this._saveTokens(res.access, res.refresh);
+        this.authVersion++;
+        this.resetSession();
         return { email };
     }
 
     async signOut() {
         await this._clearTokens();
+        this.authVersion++;
+        this.resetSession();
     }
 
     /**
@@ -117,7 +123,7 @@ class WorklensApi {
         let token = await this.ensureAuthenticated();
         const url = `${this.baseUrl}/api/worklens/history/`;
 
-        const response = await this._fetchWithTimeout(url, {
+        const response = await this._authenticatedFetch(url, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -125,6 +131,7 @@ class WorklensApi {
         }, 10000);
 
         const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || 'Could not load chat history.');
         return data.history || [];
     }
 
@@ -137,7 +144,7 @@ class WorklensApi {
         let token = await this.ensureAuthenticated();
         const url = `${this.baseUrl}/api/worklens/problem/${problemId}/`;
 
-        const response = await this._fetchWithTimeout(url, {
+        const response = await this._authenticatedFetch(url, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -157,6 +164,7 @@ class WorklensApi {
      * @param {string} problemId
      */
     resumeSession(sessionId, problemId) {
+        this._epoch++;
         this._sessionId = sessionId;
         this._problemId = problemId;
         this._guidanceLevel = 0;
@@ -169,7 +177,7 @@ class WorklensApi {
      */
     async generateDocs(payload) {
         const url = `${this.baseUrl}/api/worklens/generate-docs/`;
-        const response = await this._fetchWithTimeout(url, {
+        const response = await this._authenticatedFetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -189,7 +197,7 @@ class WorklensApi {
      */
     async generateTests(payload) {
         const url = `${this.baseUrl}/api/worklens/generate-tests/`;
-        const response = await this._fetchWithTimeout(url, {
+        const response = await this._authenticatedFetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -204,7 +212,7 @@ class WorklensApi {
 
     async generateInfra(payload) {
         const url = `${this.baseUrl}/api/worklens/generate-infra/`;
-        const response = await this._fetchWithTimeout(url, {
+        const response = await this._authenticatedFetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -224,7 +232,7 @@ class WorklensApi {
      */
     async generateCommand(payload) {
         const url = `${this.baseUrl}/api/worklens/generate-command/`;
-        const response = await this._fetchWithTimeout(url, {
+        const response = await this._authenticatedFetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -274,15 +282,17 @@ class WorklensApi {
     async send(action, payload) {
         const endpoint = ACTION_ENDPOINTS[action];
         if (!endpoint) throw new Error(`Unknown action: ${action}`);
+        let token = await this.ensureAuthenticated();
+        const epoch = this._epoch;
 
         // Inject session state into every call after the first
         const enrichedPayload = {
             ...payload,
+            client_turn_id: require('crypto').randomUUID(),
             ...(this._sessionId ? { session_id: this._sessionId } : {}),
             ...(this._problemId ? { problem_id: this._problemId } : {}),
         };
 
-        let token = await this.ensureAuthenticated();
         const url = `${this.baseUrl}${endpoint}`;
 
         let response = await this._fetchWithTimeout(url, {
@@ -309,6 +319,11 @@ class WorklensApi {
         }
 
         const data = await response.json();
+        if (epoch !== this._epoch) {
+            const error = new Error('The active conversation changed.');
+            error.staleConversation = true;
+            throw error;
+        }
 
         if (!response.ok || !data.success) {
             let msg = `Backend returned ${response.status}`;
@@ -346,7 +361,22 @@ class WorklensApi {
     }
 
     /** Reset session state (e.g. on new file / new error) */
+    async prepareHumanContext(payload) {
+        const epoch = this._epoch;
+        const response = await this._authenticatedFetch(`${this.baseUrl}/api/assistance/explicit-help-context/`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...payload, ...(this._problemId ? { problem_id: this._problemId } : {}),
+                ...(this._sessionId ? { session_id: this._sessionId } : {}) }),
+        }, 15000);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || 'Could not prepare the problem context.');
+        if (epoch !== this._epoch) { const error = new Error('Conversation changed.'); error.staleConversation = true; throw error; }
+        this._sessionId = data.session_id; this._problemId = data.problem_id;
+        return data;
+    }
+
     resetSession() {
+        this._epoch++;
         this._sessionId = null;
         this._problemId = null;
         this._guidanceLevel = 0;
@@ -361,6 +391,18 @@ class WorklensApi {
             body: JSON.stringify(body),
         }, 10000);
         return await res.json();
+    }
+
+    async _authenticatedFetch(url, options, timeoutMs) {
+        let token = await this.ensureAuthenticated();
+        const send = () => this._fetchWithTimeout(url, { ...options,
+            headers: { ...options.headers, Authorization: `Bearer ${token}` } }, timeoutMs);
+        let response = await send();
+        if (response.status === 401) {
+            await this.context.secrets.delete(TOKEN_KEY);
+            token = await this.ensureAuthenticated(); response = await send();
+        }
+        return response;
     }
 
     /**

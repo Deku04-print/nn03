@@ -99,12 +99,12 @@ export default function Layout() {
                 {/* Brand Header */}
                 <div className="sidebar-logo">
                     <WorkLensLogo size={28} showText={true} color="#1a56db" textColor="#0f172a" />
-                    <span className="sidebar-badge">ADMIN</span>
+                    <span className="sidebar-badge">{isAdminRole ? 'ADMIN' : 'PERSONAL'}</span>
                 </div>
 
                 {/* Grouped Navigation */}
                 <nav className="sidebar-nav">
-                    {NAV_SECTIONS.map((section, sIdx) => (
+                    {(isAdminRole ? [...NAV_SECTIONS, { title: 'Personal', items: [{ to: '/profile', label: 'My dashboard' }] }] : [{ title: 'Personal', items: [{ to: '/', label: 'My dashboard' }] }]).map((section, sIdx) => (
                         <div key={sIdx} className="nav-section">
                             <div className="nav-section-title">{section.title}</div>
                             {section.items.map(({ to, label, icon, badge }) => (

@@ -3182,4 +3182,15 @@ body[data-wl-theme="light"] .wl-ac-item:hover {
   display: inline-flex !important;
   align-items: center !important;
   gap: 4px !important;
-}
+}/* Assistance controls inherit the existing VS Code theme. */
+.wl-ai-feedback{display:flex;align-items:center;gap:7px;padding:9px 0 2px;margin-top:8px;font-size:10px;color:var(--vscode-descriptionForeground,#9299a6)}
+.wl-ai-feedback button{display:grid;place-items:center;padding:5px;background:transparent;color:inherit;border:1px solid transparent;border-radius:5px;cursor:pointer}
+.wl-ai-feedback button:hover{background:var(--vscode-toolbar-hoverBackground,#ffffff10)}
+.wl-ai-feedback button[aria-pressed=true]{color:var(--vscode-focusBorder,#619cff);border-color:currentColor;background:var(--vscode-list-activeSelectionBackground,#1d365a)}
+.wl-ai-feedback button:disabled{opacity:.5;cursor:wait}.wl-ai-feedback [role=status]{overflow-wrap:anywhere}
+.wl-human-cta{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px;margin:6px 14px;border:1px solid var(--vscode-widget-border,#394456);border-radius:8px;font-size:11px;color:var(--vscode-descriptionForeground,#9299a6)}
+.wl-human-cta button{background:transparent;border:1px solid var(--vscode-focusBorder,#619cff);color:var(--vscode-focusBorder,#619cff);border-radius:5px;padding:5px 10px;font:inherit;cursor:pointer}
+.wl-notification-wrap{position:relative}.wl-notification-badge{position:absolute;right:-3px;top:-4px;min-width:13px;padding:1px 3px;font-size:9px;border-radius:8px;background:var(--vscode-badge-background,#2563eb);color:var(--vscode-badge-foreground,#fff)}
+.wl-notification-menu{position:absolute;right:-50px;top:30px;width:min(300px,80vw);max-height:360px;overflow:auto;background:var(--vscode-menu-background,#252526);color:var(--vscode-menu-foreground,#ccc);border:1px solid var(--vscode-widget-border,#454545);border-radius:8px;z-index:1000;padding:8px;box-shadow:0 8px 24px #0004;font-size:11px}
+.wl-notification-row{padding:8px 2px;border-bottom:1px solid var(--vscode-widget-border,#454545)}.wl-notification-row button{display:block;background:transparent;color:inherit;border:0;text-align:left;cursor:pointer;font:inherit;padding:5px}.wl-notification-row button:hover{text-decoration:underline}
+.wl-not-signed-in .wl-notification-wrap{display:none}

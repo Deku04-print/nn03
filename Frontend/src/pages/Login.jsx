@@ -34,12 +34,6 @@ export default function Login() {
     }
   };
 
-  const handleQuickFill = (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPass(demoPass);
-    setError('');
-  };
-
   return (
     <div className="auth-split-page">
       {/* ── Left Side: Product Landing & Feature Showcase ── */}
@@ -133,10 +127,10 @@ export default function Login() {
             <div className="auth-header">
               <div className="auth-logo-badge">
                 <WorkLensLogo size={36} showText={true} color="#1a56db" textColor="#0f172a" />
-                <span className="auth-portal-pill">Admin Console</span>
+                <span className="auth-portal-pill">NEXUS Workspace</span>
               </div>
               <h2>Sign in to Dashboard</h2>
-              <p>Enter your credentials to monitor cohort telemetry and system insights.</p>
+              <p>Use your existing account to view your workspace. Administrators retain access to system insights.</p>
             </div>
 
             {error && (
@@ -159,7 +153,7 @@ export default function Login() {
                     id="email"
                     type="email"
                     className="auth-input"
-                    placeholder="admin@tcs.com"
+                    placeholder="user@tcs.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -205,33 +199,12 @@ export default function Login() {
                   </>
                 ) : (
                   <>
-                    <span>Sign In to Admin Portal</span>
+                    <span>Sign In to NEXUS</span>
                     <HiOutlineArrowRight size={16} />
                   </>
                 )}
               </button>
             </form>
-
-            {/* Quick-fill helper for convenience */}
-            <div className="auth-quick-login">
-              <span className="quick-login-label">Quick Sign In:</span>
-              <div className="quick-login-chips">
-                <button
-                  type="button"
-                  className="chip-btn"
-                  onClick={() => handleQuickFill('admin@tcs.com', 'admin')}
-                >
-                  Admin (admin@tcs.com)
-                </button>
-                <button
-                  type="button"
-                  className="chip-btn"
-                  onClick={() => handleQuickFill('user@tcs.com', 'user')}
-                >
-                  Dev (user@tcs.com)
-                </button>
-              </div>
-            </div>
 
             <div className="auth-card-footer">
               <HiOutlineShieldCheck className="security-icon" />

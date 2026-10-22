@@ -25,9 +25,9 @@ export function AuthProvider({ children }) {
         const res = await api.login(email, password);
         saveToken(res.access);
         const me = await api.me();
-        if (!me.user || me.user.super_user !== 1) {
+        if (!me.user) {
             clearToken();
-            throw new Error('Access denied. Only super admins can log in.');
+            throw new Error('Unable to load your user profile.');
         }
         setUser(me.user);
     };

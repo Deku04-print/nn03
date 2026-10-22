@@ -1,0 +1,17 @@
+# Machine-specific configuration and generated files are never handover source.
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/dist/
+**/.verification/
+**/*.db
+**/*.sqlite3
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+**/.worklens-history.json

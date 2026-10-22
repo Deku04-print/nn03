@@ -6,10 +6,12 @@ WorkLens API Views — 5 mentor endpoints with full ProblemDNA lifecycle.
 - verify: compares diagnostics, updates Problem + ProblemResolution
 """
 import logging
-from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status as http_status
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from apps.assistance.models import AITurn
 
 from .models import WorkLensSession, Problem, ProblemContext, Attempt, ProblemResolution
 from .serializers import AnalyzeRequestSerializer, VerifyRequestSerializer
@@ -20,32 +22,43 @@ from ai.sanitizer import sanitize_payload
 from ai.retrieval.semantic_search import SemanticSearch
 
 logger = logging.getLogger('worklens.views')
-User   = get_user_model()
 
 
 class WorklensBaseView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def _get_dev_user(self):
-        user, _ = User.objects.get_or_create(
-            email='dev@worklens.local',
-            defaults={'name': 'Dev User', 'is_active': True}
-        )
-        return user
+    def finalize_response(self, request, response, *args, **kwargs):
+        data = getattr(response, 'data', None)
+        if (request.method == 'POST' and isinstance(data, dict) and data.get('success')
+                and data.get('problem_id') and isinstance(data.get('response'), dict)):
+            problem = get_object_or_404(Problem, pk=data['problem_id'], user=request.user)
+            import uuid
+            turn, _ = AITurn.objects.get_or_create(
+                problem=problem, client_id=request.data.get('client_turn_id') or uuid.uuid4(),
+                defaults={'question': request.data.get('user_message', ''),
+                          'response': data['response'], 'action': request.data.get('action', 'ask')})
+            data['response'] = turn.response
+            data['response_id'] = str(turn.id)
+            data['conversation_id'] = str(problem.session_id)
+            data['problem_context_id'] = str(problem.context.id)
+            data['ai_response_count'] = problem.ai_turns.count()
+            data['human_api_suggested'] = (problem.status != 'resolved' and
+                data['ai_response_count'] >= settings.HUMAN_API_RESPONSE_THRESHOLD)
+            data['human_api_threshold'] = settings.HUMAN_API_RESPONSE_THRESHOLD
+            data.pop('_replayed', None)
+        return super().finalize_response(request, response, *args, **kwargs)
 
     def _resolve_user(self, request):
-        if request.user and request.user.is_authenticated:
-            return request.user
-        return self._get_dev_user()
+        return request.user
 
     def _get_or_create_session(self, request):
         user       = self._resolve_user(request)
         session_id = request.data.get('session_id')
         if session_id:
-            try:
-                return WorkLensSession.objects.get(id=session_id, user=user)
-            except WorkLensSession.DoesNotExist:
-                pass
+            return get_object_or_404(WorkLensSession, id=session_id, user=user)
+        problem_id = request.data.get('problem_id')
+        if problem_id:
+            return get_object_or_404(Problem, id=problem_id, user=user).session
         return WorkLensSession.objects.create(
             user=user,
             project=request.data.get('workspace', {}).get('project_name', ''),
@@ -55,14 +68,15 @@ class WorklensBaseView(APIView):
         """Return an existing Problem (by problem_id) or None."""
         problem_id = request.data.get('problem_id')
         if problem_id:
-            try:
-                return Problem.objects.get(id=problem_id, user=user)
-            except Problem.DoesNotExist:
-                pass
+            return get_object_or_404(Problem, id=problem_id, user=user, session=session)
         return None
 
     def _run_orchestrator(self, action, payload, session, request, problem=None):
         user = self._resolve_user(request)
+        if problem and payload.get('client_turn_id'):
+            prior = AITurn.objects.filter(problem=problem, client_id=payload['client_turn_id']).first()
+            if prior:
+                return {'success': True, 'response': prior.response, '_replayed': True}
 
         # Build state extras for conversation continuity
         previous_hints  = []
@@ -89,6 +103,7 @@ class WorklensBaseView(APIView):
 
         # §35-36: Sanitize before any AI processing
         payload = sanitize_payload(payload)
+        enriched_payload = sanitize_payload(enriched_payload)
 
         orch   = WorkLensOrchestrator()
         import time
@@ -161,7 +176,7 @@ class WorklensBaseView(APIView):
             framework=meta.get('framework') or '',
             problem_type=meta.get('problem_type', 'unknown'),
             category=meta.get('problem_category', 'unknown'),
-            description=resp.get('observation', '')[:1000],
+            description=(payload.get('user_message') or resp.get('observation', '') or resp.get('message', ''))[:1000],
             confidence=meta.get('confidence', 0.0),
         )
 
@@ -192,6 +207,8 @@ class WorklensBaseView(APIView):
 
     def _record_attempt(self, problem, action, result):
         """Append attempt to ProblemDNA and create Attempt record."""
+        if result.get('_replayed'):
+            return
         resp  = result.get('response', {})
         level = int(resp.get('guidance_level', 0))
 
@@ -281,10 +298,19 @@ class AnalyzeView(WorklensBaseView):
                 {'success': False, 'error': {'code': 'VALIDATION_ERROR', 'message': ser.errors}},
                 status=http_status.HTTP_400_BAD_REQUEST,
             )
+        # Retry an initial analyze without creating another problem case.
+        prior = AITurn.objects.filter(problem__user=request.user, client_id=ser.validated_data.get('client_turn_id')).first()
+        if prior:
+            return Response({'success': True, 'response': prior.response, 'problem_id': str(prior.problem_id),
+                             'session_id': str(prior.problem.session_id)})
         session = self._get_or_create_session(request)
-        result  = self._run_orchestrator('ask', request.data, session, request)
+        problem = self._resolve_problem(request, session, request.user)
+        result  = self._run_orchestrator('ask', request.data, session, request, problem)
         if result.get('success'):
-            problem = self._create_problem_and_dna(request, session, result)
+            if problem:
+                self._record_attempt(problem, 'ask', result)
+            else:
+                problem = self._create_problem_and_dna(request, session, result)
             result['problem_id'] = str(problem.id)
         return Response({**result, 'session_id': str(session.id)})
 
@@ -301,6 +327,8 @@ class GuideView(WorklensBaseView):
         user    = self._resolve_user(request)
         problem = self._resolve_problem(request, session, user)
         result  = self._run_orchestrator('guide', request.data, session, request, problem)
+        if not problem and result.get('success'):
+            problem = self._create_problem_and_dna(request, session, result)
         if problem and result.get('success'):
             self._record_attempt(problem, 'guide', result)
         return Response({**result, 'session_id': str(session.id),
@@ -319,6 +347,8 @@ class HintView(WorklensBaseView):
         user    = self._resolve_user(request)
         problem = self._resolve_problem(request, session, user)
         result  = self._run_orchestrator('hint', request.data, session, request, problem)
+        if not problem and result.get('success'):
+            problem = self._create_problem_and_dna(request, session, result)
         if problem and result.get('success'):
             self._record_attempt(problem, 'hint', result)
         return Response({**result, 'session_id': str(session.id),
@@ -337,6 +367,8 @@ class ExplainView(WorklensBaseView):
         user    = self._resolve_user(request)
         problem = self._resolve_problem(request, session, user)
         result  = self._run_orchestrator('explain', request.data, session, request, problem)
+        if not problem and result.get('success'):
+            problem = self._create_problem_and_dna(request, session, result)
         if problem and result.get('success'):
             self._record_attempt(problem, 'explain', result)
         return Response({**result, 'session_id': str(session.id),
@@ -427,6 +459,12 @@ class ProblemDetailView(WorklensBaseView):
 
         return Response({
             'success': True,
+            'messages': [{'id': str(t.id), 'question': t.question, 'response': t.response,
+                          'feedback': getattr(getattr(t, 'feedback', None), 'value', None),
+                          'created_at': t.created_at.isoformat()} for t in problem.ai_turns.select_related('feedback').all()],
+            'problem_context_id': str(problem.context.id) if hasattr(problem, 'context') else None,
+            'ai_response_count': problem.ai_turns.count(),
+            'human_api_suggested': problem.status != 'resolved' and problem.ai_turns.count() >= settings.HUMAN_API_RESPONSE_THRESHOLD,
             'problem': {
                 'id': str(problem.id),
                 'session_id': str(problem.session_id),

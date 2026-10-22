@@ -208,7 +208,7 @@ Rules:
                 "YOUR JOB:\n"
                 "- Directly inspect the 'Selected Terminal Output' below and any referenced workspace file code.\n"
                 "- Pinpoint the exact root cause in the user's workspace.\n"
-                "- Explain why it happened and provide the precise command or code edit to fix it.\n"
+                "- Explain likely causes, diagnostic steps, and how to verify the result; never provide corrected code.\n"
             )
         elif input_type == 'todo':
             mode_rules = (
@@ -259,6 +259,7 @@ Rules:
             f"{code_block}\n"
             f"{mode_rules}\n"
             "CRITICAL CAPABILITY RULES:\n"
+            "- Provide troubleshooting guidance, diagnostic steps, and verification; NEVER return corrected code or ready-to-paste snippets.\n"
             "- You ARE integrated in VS Code and you DO have direct access to the user's file code provided above.\n"
             "- NEVER say 'as an AI language model, I don't have access to your workspace or files directly'. You DO have access to the code above!\n"
             "- NEVER ask the user to 'please provide the code snippet' if code is already present above. Inspect and analyze the provided code directly!\n"

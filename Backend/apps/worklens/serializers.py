@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 class DiagnosticSerializer(serializers.Serializer):
     message  = serializers.CharField(max_length=2000)
-    severity = serializers.CharField(default='error', required=False)
+    severity = serializers.ChoiceField(choices=['error', 'warning', 'information', 'hint'], default='error', required=False)
     line     = serializers.IntegerField(min_value=0, default=0, required=False)
     column   = serializers.IntegerField(min_value=0, required=False, default=0)
 
@@ -70,6 +70,7 @@ class AnalyzeRequestSerializer(serializers.Serializer):
     # Conversation continuity fields (sent by extension on follow-up requests)
     session_id      = serializers.UUIDField(required=False, allow_null=True)
     problem_id      = serializers.UUIDField(required=False, allow_null=True)
+    client_turn_id  = serializers.UUIDField(required=False)
     previous_hints  = serializers.ListField(
         child=serializers.CharField(max_length=2000),
         required=False, default=list,

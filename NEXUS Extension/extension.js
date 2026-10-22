@@ -9,6 +9,7 @@ const { InfraGeneratorAgent } = require('./src/agents/infraGeneratorAgent');
 const { TerminalCommandAgent } = require('./src/agents/terminalCommandAgent');
 const { TerminalErrorAnalyzer } = require('./src/context/terminalErrorAnalyzer');
 const { exec } = require('child_process');
+const { AssistanceController } = require('./src/assistance/controller');
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -26,6 +27,9 @@ function activate(context) {
   );
 
   const cmd = new WorklensCommand(panelProvider, context);
+  const assistance = new AssistanceController(cmd.api, panelProvider);
+  const notificationTimer = setInterval(() => assistance.notifications(), 10000);
+  context.subscriptions.push({ dispose: () => { clearInterval(notificationTimer); assistance.dispose(); } });
   const docAgent = new DocGeneratorAgent(panelProvider, cmd.api);
   const testAgent = new TestGeneratorAgent(panelProvider, cmd.api);
   const infraAgent = new InfraGeneratorAgent(panelProvider, cmd.api);
@@ -55,6 +59,25 @@ function activate(context) {
 
   // Register all commands
   const commands = [
+    vscode.commands.registerCommand('worklens.openHumanAPI', payload => assistance.open(payload || {})),
+    vscode.commands.registerCommand('worklens.aiFeedback', payload => assistance.feedback(payload)),
+    vscode.commands.registerCommand('worklens.loadNotifications', () => assistance.notifications()),
+    vscode.commands.registerCommand('worklens.readNotification', async payload => {
+      try { await assistance.request('notifications/', { id: payload.id }); assistance.notifications(); }
+      catch (e) { panelProvider.postMessage({ type: 'assistance_notifications_error', message: e.message }); }
+    }),
+    vscode.commands.registerCommand('worklens.resetBackendSession', () => cmd.api.resetSession()),
+    vscode.commands.registerCommand('worklens.resumeBackendSession', async payload => {
+      cmd.api.resetSession();
+      if (!payload?.problem_id) return;
+      try {
+        const detail = await cmd.api.getProblemDetail(payload.problem_id);
+        cmd.api.resumeSession(detail.problem.session_id, detail.problem.id);
+        panelProvider.postMessage({ type: 'assistance_context', data: { problem_id: detail.problem.id,
+          problem_context_id: detail.problem_context_id, conversation_id: detail.problem.session_id,
+          human_api_suggested: detail.human_api_suggested, ai_response_count: detail.ai_response_count } });
+      } catch (e) { panelProvider.postMessage({ type: 'assistance_notifications_error', message: e.message }); }
+    }),
     vscode.commands.registerCommand('worklens.ask', () => cmd.execute('ask')),
     vscode.commands.registerCommand('worklens.guide', () => cmd.execute('guide')),
     vscode.commands.registerCommand('worklens.hint', (payload) => {

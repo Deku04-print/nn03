@@ -198,6 +198,11 @@
     "configuration": {
       "title": "WorkLens",
       "properties": {
+        "worklens.dashboardUrl": {
+          "type": "string",
+          "default": "http://localhost:3456",
+          "description": "NEXUS browser dashboard URL (same backend identity/database)"
+        },
         "worklens.backendUrl": {
           "type": "string",
           "default": "http://127.0.0.1:8000/",
@@ -212,7 +217,8 @@
     }
   },
   "scripts": {
-    "test": "node ./test/runTest.js"
+    "test": "node --test test/*.test.js",
+    "check": "node --check extension.js && node --check media/worklens.js && node --check media/assistance.js && node --check src/assistance/controller.js && node --check src/ui/webview.js && node --check src/api/worklensApi.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.85.0",

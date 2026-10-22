@@ -19,14 +19,18 @@ export function clearToken() {
     localStorage.removeItem('wl_token');
 }
 
-async function request(path, opts = {}) {
+export async function request(path, opts = {}) {
+    const hadToken = !!_token;
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (_token) headers['Authorization'] = `Bearer ${_token}`;
 
     const res = await fetch(`${BASE}${path}`, { ...opts, headers });
     const data = await res.json().catch(() => ({}));
 
-    if (res.status === 401) { clearToken(); window.location.href = '/login'; }
+    if (res.status === 401 && hadToken) {
+        sessionStorage.setItem('wl_return_to', window.location.pathname);
+        clearToken(); window.location.href = '/login';
+    }
     if (!res.ok) {
         const err = new Error(data?.detail || data?.error?.message || `Error ${res.status}`);
         err.status = res.status;
@@ -37,6 +41,9 @@ async function request(path, opts = {}) {
 }
 
 export const api = {
+    assistance: (path, body) => request('/api/assistance/' + path, body === undefined ? {} : { method: 'POST', body: JSON.stringify(body) }),
+    expertSettings: (userId, body) => request(`/api/assistance/admin/experts/${userId}/`, body === undefined ? {} : { method: 'PATCH', body: JSON.stringify(body) }),
+    knowledge: (userId, body, id) => request(`/api/assistance/admin/experts/${userId}/knowledge/${id ? id + '/' : ''}`, { method: id ? 'PATCH' : 'POST', body: JSON.stringify(body) }),
     // Auth
     login: (email, password) =>
         request('/api/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }) }),

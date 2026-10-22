@@ -3,7 +3,7 @@ const vscode = require('vscode');
 const path = require('path');
 const { collectContext } = require('../context/selectionContext');
 const { collectFileContext } = require('../context/fileContext');
-const { collectDiagnostics } = require('../context/diagnosticsContext');
+const { collectDiagnostics } = require('../context/diagnosticContext');
 const { collectWorkspaceContext } = require('../context/workspaceContext');
 const { collectRelatedFilesContext, collectRelatedFilesBatched } = require('../context/relatedFilesContext');
 const { sanitizeContext } = require('../context/sanitizer');
@@ -260,6 +260,12 @@ class WorklensCommand {
             // ── Sanitize (strip secrets) ──────────────────────────────
             const payload = sanitizeContext(raw);
 
+            if (require('../../media/assistance').explicitHumanHelp(userText)) {
+                const data = await this.api.prepareHumanContext(payload);
+                this.panelProvider.postMessage({ type: 'human_help_ready', data, context: payload });
+                return;
+            }
+
             // ── Send to backend ───────────────────────────────────────
             const response = await this.api.send(action, payload);
 
@@ -274,6 +280,7 @@ class WorklensCommand {
             });
 
         } catch (err) {
+            if (err.staleConversation) return;
             console.error('[WorkLens] Command error:', err);
             this.panelProvider.postMessage({
                 type: 'error',
@@ -368,6 +375,7 @@ class WorklensCommand {
             });
 
         } catch (err) {
+            if (err.staleConversation) return;
             console.error('[WorkLens] Terminal analysis error:', err);
             this.panelProvider.postMessage({
                 type: 'error',

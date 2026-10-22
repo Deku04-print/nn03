@@ -5,6 +5,11 @@
     'use strict';
 
     const vscode = acquireVsCodeApi();
+    const assistanceUI = window.createAssistanceUI(vscode);
+    window.addEventListener('nexus-feedback-saved', () => _saveCurrentConversation());
+    window.addEventListener('message', event => {
+        if (event.data.type === 'assistance_context') assistanceUI.showCTA(event.data.data, '');
+    });
 
     // ── State ──────────────────────────────────────────────────────────
     let guidanceLevel = 0;
@@ -336,6 +341,9 @@
                     guidanceLevel = 0;
                     currentConversationId = restoreConv.id;
                     currentConversationMessages = Array.isArray(restoreConv.messages) ? restoreConv.messages : [];
+                    assistanceUI.reset();
+                    currentConversationContext = restoreConv.context || {};
+                    vscode.postMessage({ type: 'resume_backend_session', problem_id: currentConversationContext.problem_id });
 
                     // ── Restored conversation banner ──
                     const banner = document.createElement('div');
@@ -682,6 +690,7 @@
         box.className = 'wl-msg-content-box';
 
         function _finishCard(stoppedEarly) {
+            assistanceUI.feedback(body, r);
             // ── File Errors section (Enhanced mode only) ───────────────
             if (Array.isArray(r.file_errors) && r.file_errors.length > 0) {
                 const errDiv = document.createElement('div');
@@ -1184,6 +1193,7 @@
                 const data = message.data || {};
                 const meta = data.metadata || {};
                 const resp = data.response || {};
+                resp._nexusResponseId = data.response_id;
                 const vdbMatch = data.vector_db_match || null;
 
                 // Remove the inline thinking bubble (if present)
@@ -1202,6 +1212,9 @@
 
                 // ── Auto-save to local history ──
                 currentConversationContext = {
+                    problem_id: data.problem_id,
+                    session_id: data.session_id,
+                    problem_context_id: data.problem_context_id,
                     file_name: ctx.file_name || ctx.fileName || '',
                     language: ctx.language || '',
                 };
@@ -1255,6 +1268,7 @@
                         appendSuggestions(resp.suggestions || []);
                     }
                     _saveCurrentConversation();
+                    assistanceUI.showCTA(data, currentConversationMessages.filter(m => m.role === 'user').at(-1)?.content || '');
                 });
 
                 // ── Repeated mistake popup ──────────────────────────────
@@ -1275,6 +1289,15 @@
                 break;
             }
 
+            case 'human_help_ready': {
+                _removeThinkingBubble(); setGeneratingState(false);
+                const data = message.data;
+                currentConversationContext = { ...currentConversationContext, problem_id: data.problem_id,
+                    session_id: data.session_id, problem_context_id: data.problem_context_id };
+                assistanceUI.showCTA(data, 'human help');
+                _saveCurrentConversation(); showState('mentor'); activateTab('chat'); break;
+            }
+
 
             case 'auth_status':
                 if (message.signedIn) {
@@ -1285,6 +1308,11 @@
                     // Login failed — show error on the form
                     handleAuthError(message.error);
                 } else {
+                    assistanceUI.reset();
+                    currentConversationMessages = [];
+                    currentConversationContext = {};
+                    conversationHistory = [];
+                    if (conversation) conversation.innerHTML = '';
                     showState('idle');
                 }
                 break;
@@ -1333,6 +1361,22 @@
                 const prob = detail.problem || {};
                 const ctx = detail.context || {};
                 const attempts = detail.attempts || [];
+
+                assistanceUI.reset();
+                currentConversationContext = { problem_id: prob.id, session_id: prob.session_id, problem_context_id: detail.problem_context_id };
+                currentConversationMessages = [];
+                if (detail.messages?.length) {
+                    conversation.innerHTML = ''; conversationHistory = [];
+                    detail.messages.forEach(turn => {
+                        if (turn.question) { appendUserMessage(turn.question); conversationHistory.push({ role: 'user', text: turn.question }); }
+                        const response = { ...turn.response, _nexusResponseId: turn.id, _nexusFeedback: turn.feedback };
+                        appendMentorCard(response, {}, null);
+                        conversationHistory.push({ role: 'mentor', response });
+                        currentConversationMessages.push({ role: 'user', content: turn.question, timestamp: turn.created_at }, { role: 'assistant', content: response.message || response.observation || '', rawResponse: response, timestamp: turn.created_at });
+                    });
+                    assistanceUI.showCTA({ ...detail, problem_id: prob.id }, '');
+                    showState('mentor'); activateTab('chat'); break;
+                }
 
                 // Clear any existing conversation
                 if (conversation) conversation.innerHTML = '';
@@ -1580,6 +1624,7 @@
 
         // Build conversation history for the backend
         const convHistory = _buildConversationHistoryForBackend();
+        assistanceUI.explicit(text);
 
         // Extract any @mentions typed in the text + files explicitly tagged
         const taggedSet = new Set(activeTaggedFiles);
@@ -1830,6 +1875,9 @@
                 guidanceLevel = 0;
                 currentConversationId = conv.id;
                 currentConversationMessages = Array.isArray(conv.messages) ? conv.messages : [];
+                assistanceUI.reset();
+                currentConversationContext = conv.context || {};
+                vscode.postMessage({ type: 'resume_backend_session', problem_id: currentConversationContext.problem_id });
 
                 const banner = document.createElement('div');
                 banner.className = 'wl-restore-banner';
@@ -1922,6 +1970,8 @@
 
     // ── Conversation Reset & Clear Actions ─────────────────────────────
     function _resetCurrentConversation() {
+        assistanceUI.reset();
+        vscode.postMessage({ type: 'reset_backend_session' });
         stopGeneration();
         stopVoiceInput();
         closeSearchModal();

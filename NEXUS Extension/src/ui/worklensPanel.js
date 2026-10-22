@@ -25,6 +25,12 @@ const VIEW_TYPE = 'worklens.mentorPanel';
  * @type {Record<string, string>}
  */
 const MESSAGE_COMMAND_MAP = {
+    open_human_api: 'worklens.openHumanAPI',
+    ai_feedback: 'worklens.aiFeedback',
+    load_notifications: 'worklens.loadNotifications',
+    read_notification: 'worklens.readNotification',
+    reset_backend_session: 'worklens.resetBackendSession',
+    resume_backend_session: 'worklens.resumeBackendSession',
     user_reply: 'worklens.hint',
     request_hint: 'worklens.hint',
     verify: 'worklens.verify',
@@ -60,6 +66,7 @@ const MESSAGE_COMMAND_MAP = {
 
 /** Messages that need their full payload forwarded to the command. */
 const PAYLOAD_COMMANDS = new Set([
+    'open_human_api', 'ai_feedback', 'read_notification', 'resume_backend_session',
     'sign_in_credentials', 'load_chat', 'user_reply',
     'search_conversations', 'open_local_conversation', 'save_conversation',
     'delete_conversation', 'generate_docs', 'generate_tests',
@@ -174,12 +181,13 @@ class WorklensPanelProvider {
             vscode.Uri.joinPath(this._extensionUri, 'media', 'worklens.js'),
         );
         const logo1Uri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, 'media', 'logo1.png'),
+            vscode.Uri.joinPath(this._extensionUri, 'media', 'nexus-placeholder.svg'),
         );
         const nameTagUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, 'media', 'name_tag.png'),
+            vscode.Uri.joinPath(this._extensionUri, 'media', 'nexus-placeholder.svg'),
         );
-        webview.html = getWebviewContent(cssUri, jsUri, webview, logo1Uri, nameTagUri);
+        const assistanceUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'assistance.js'));
+        webview.html = getWebviewContent(cssUri, jsUri, webview, logo1Uri, nameTagUri, assistanceUri);
     }
 
     /**

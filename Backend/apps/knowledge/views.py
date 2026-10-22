@@ -17,7 +17,7 @@ logger = logging.getLogger('worklens.knowledge')
 
 class ProblemDNAListCreateView(APIView):
     """GET /api/problems/   POST /api/problems/"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         qs = ProblemDNA.objects.all()
@@ -68,7 +68,7 @@ class ProblemDNAListCreateView(APIView):
 
 class ProblemDNADetailView(APIView):
     """GET /api/problems/<id>/   PATCH /api/problems/<id>/"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, pk):
         try:
@@ -106,7 +106,7 @@ class ProblemDNADetailView(APIView):
 
 class ProblemDNAAnalyticsView(APIView):
     """GET /api/problems/analytics/"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         total = ProblemDNA.objects.count()
@@ -167,7 +167,7 @@ class ProblemDNAAnalyticsView(APIView):
 
 class SimilarProblemsView(APIView):
     """GET /api/problems/similar/?q=...&language=...&category=..."""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         query    = request.query_params.get('q', '')
@@ -185,7 +185,7 @@ class SimilarProblemsView(APIView):
 
 class AttemptCreateView(APIView):
     """POST /api/problems/<id>/attempts/"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def post(self, request, pk):
         try:

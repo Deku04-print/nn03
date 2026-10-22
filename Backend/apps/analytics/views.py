@@ -10,7 +10,7 @@ from apps.agents.models import AgentInteraction
 
 
 class OverviewView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         user_id = request.query_params.get('user_id')
@@ -62,7 +62,7 @@ class OverviewView(APIView):
 
 
 class ProblemsAnalyticsView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         user_id = request.query_params.get('user_id')
@@ -77,7 +77,7 @@ class ProblemsAnalyticsView(APIView):
 
 
 class CategoriesView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         user_id = request.query_params.get('user_id')
@@ -95,7 +95,7 @@ class CategoriesView(APIView):
 
 
 class ResolutionView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         user_id = request.query_params.get('user_id')
@@ -109,7 +109,7 @@ class ResolutionView(APIView):
 
 
 class AgentsView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         interactions = (
@@ -127,7 +127,7 @@ class AgentsView(APIView):
 
 class DevelopersListView(APIView):
     """GET /api/analytics/developers/"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
         users = WorkLensUser.objects.filter(is_active=True).order_by('name')
@@ -154,7 +154,7 @@ class DevelopersListView(APIView):
 
 class DeveloperDetailAnalyticsView(APIView):
     """GET /api/analytics/developers/<user_id>/"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, user_id):
         try:

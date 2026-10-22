@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'apps.knowledge',
     'apps.agents',
     'apps.analytics',
+    'apps.assistance',
 ]
 
 MIDDLEWARE = [
@@ -118,7 +119,7 @@ SIMPLE_JWT = {
 # ── CORS ─────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://localhost:5173'
+    'http://localhost:3000,http://localhost:5173,http://localhost:3456'
 ).split(',')
 
 # ── Static / Media ────────────────────────────────────────────────
@@ -143,3 +144,9 @@ RETRIEVAL_WEIGHTS = {
     'category':  float(os.environ.get('RW_CATEGORY',  '0.15')),  # same category bonus
     'verified':  float(os.environ.get('RW_VERIFIED',  '0.10')),  # verified-DNA bonus
 }
+
+HUMAN_API_RESPONSE_THRESHOLD = max(1, int(os.environ.get('HUMAN_API_RESPONSE_THRESHOLD', '4')))
+# Prepared integration point only; credentials stay server-side.
+COMPANY_GIT_BASE_URL = os.environ.get('COMPANY_GIT_BASE_URL', '')
+COMPANY_GIT_ORGANIZATION = os.environ.get('COMPANY_GIT_ORGANIZATION', '')
+COMPANY_GIT_TOKEN = os.environ.get('COMPANY_GIT_TOKEN', '')

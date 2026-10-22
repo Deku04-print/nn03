@@ -229,8 +229,7 @@ class VerifyResolvesTest(APITestCase):
     @patch('apps.worklens.views.WorkLensOrchestrator')
     def test_verify_without_problem_id_still_returns_200(self, mock_cls):
         """Verify without a problem_id should still return 200 (no problem to update)."""
-        # Clear any potentially malformed auth headers before calling AllowAny endpoint
-        self.client.credentials()
+        # Authenticated verification without a problem ID preserves the existing response contract.
         mock_cls.return_value.run.return_value = VERIFY_RESULT
         r = self.client.post('/api/worklens/verify/', {
             **ANALYZE_PAYLOAD,

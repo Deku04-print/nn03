@@ -294,6 +294,11 @@ class ProblemDNAModelTest(TestCase):
 
 @override_settings(REST_FRAMEWORK=NO_THROTTLE)
 class SimilarProblemsTest(APITestCase):
+    def setUp(self):
+        cache.clear()
+        admin = User.objects.create_superuser('knowledge-admin@tcs.com', 'Knowledge Admin', 'strongpass!')
+        self.client.force_authenticate(admin)
+
     def test_similar_returns_list(self):
         """Similar endpoint returns a list even with no data."""
         resp = self.client.get('/api/problems/similar/?q=IndexError&language=python')
